@@ -1,0 +1,8 @@
+[package]
+name = "lbclient"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+p256 = "0.13.2"
+sqlite = "0.37.0"

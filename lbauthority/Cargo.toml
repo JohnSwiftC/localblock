@@ -4,4 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+p256 = { version = "0.13.2", features = ["ecdsa"] }
 tokio = { version = "1.46.1", features = ["full"] }
