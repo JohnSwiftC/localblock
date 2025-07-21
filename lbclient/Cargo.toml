@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 p256 = "0.13.2"
 sqlite = "0.37.0"
+rand_core = "0.6.4"

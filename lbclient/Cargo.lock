@@ -189,6 +189,7 @@ name = "lbclient"
 version = "0.1.0"
 dependencies = [
  "p256",
+ "rand_core",
  "sqlite",
 ]
 
