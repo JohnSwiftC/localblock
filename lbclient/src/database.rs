@@ -4,21 +4,23 @@ use sqlite::Connection;
 use sqlite::State;
 
 /// Creates and stores a signing key
-fn create_private_key(conn: &Connection, name: &str) -> SigningKey {
+pub fn create_private_key(conn: &Connection, name: &str) -> Result<SigningKey, LoadingError> {
     let key = SigningKey::random(&mut OsRng);
     let mut statement = conn.prepare("INSERT INTO keys (name, key) VALUES (?, ?)").unwrap();
-    statement.bind((1, name)).unwrap();
-    statement.bind((2, key.to_bytes().as_slice())).unwrap();
-    key
+    statement.bind((1, name)).map_err(|e| { LoadingError::GenericSQLError { message: format!("{}", e) }})?;
+    statement.bind((2, key.to_bytes().as_slice())).map_err(|e| LoadingError::GenericSQLError { message: format!("{}", e) })?;
+    statement.next().map_err(|e| { LoadingError::GenericSQLError { message: format!("{}", e) }})?;
+    Ok(key)
 }
 
+#[derive(Debug)]
 pub enum LoadingError {
     NameNotFound,
     KeyFailedLoad,
     GenericSQLError { message: String },
 }
 
-fn load_signing_key_hex(connection: &Connection, name: &str) -> Result<SigningKey, LoadingError> {
+pub fn load_signing_key(connection: &Connection, name: &str) -> Result<SigningKey, LoadingError> {
     let mut statement = connection.prepare("SELECT key FROM keys WHERE name = ?").map_err(|e| {
         LoadingError::GenericSQLError { message: format!("{}", e) }
     })?;
@@ -37,7 +39,7 @@ fn load_signing_key_hex(connection: &Connection, name: &str) -> Result<SigningKe
     }
 }
 
-fn init_db_conn() -> Result<Connection, LoadingError> {
+pub fn init_db_conn() -> Result<Connection, LoadingError> {
     let conn = sqlite::open("client.db").map_err(|e| {
         LoadingError::GenericSQLError { message: format!("{}", e) }
     })?;
