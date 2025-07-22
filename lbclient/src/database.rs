@@ -43,7 +43,7 @@ pub fn init_db_conn() -> Result<Connection, LoadingError> {
     let conn = sqlite::open("client.db").map_err(|e| {
         LoadingError::GenericSQLError { message: format!("{}", e) }
     })?;
-    conn.execute("CREATE TABLE IF NOT EXISTS keys (name TEXT, key BLOB)").map_err(|e| {
+    conn.execute("CREATE TABLE IF NOT EXISTS keys (name TEXT PRIMARY KEY, key BLOB)").map_err(|e| {
         LoadingError::GenericSQLError { message: format!("{}", e) }
     })?;
     Ok(conn)
