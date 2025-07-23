@@ -20,6 +20,18 @@ pub enum LoadingError {
     GenericSQLError { message: String },
 }
 
+use std::error::Error;
+impl std::fmt::Display for LoadingError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LoadingError::NameNotFound => write!(f, "key is not present in the database"),
+            LoadingError::KeyFailedLoad => write!(f, "key is not properly formatted in the database, erase the entry and attempt to restore"),
+            LoadingError::GenericSQLError { message } => write!(f,"{}", message),
+        }
+    }
+}
+impl Error for LoadingError {}
+
 pub fn load_signing_key(connection: &Connection, name: &str) -> Result<SigningKey, LoadingError> {
     let mut statement = connection.prepare("SELECT key FROM keys WHERE name = ?").map_err(|e| {
         LoadingError::GenericSQLError { message: format!("{}", e) }

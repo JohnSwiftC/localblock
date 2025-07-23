@@ -7,3 +7,4 @@ edition = "2024"
 p256 = "0.13.2"
 sqlite = "0.37.0"
 rand_core = "0.6.4"
+clap = { version = "4.5.41", features = ["derive"] }
