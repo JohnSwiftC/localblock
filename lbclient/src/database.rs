@@ -82,6 +82,28 @@ pub fn load_signing_key(connection: &Connection, name: &str) -> Result<SigningKe
     }
 }
 
+pub fn get_wallet_names(conn: &Connection) -> Result<Vec<String>, LoadingError> {
+    let mut statement =
+        conn.prepare("SELECT name FROM keys")
+            .map_err(|e| LoadingError::GenericSQLError {
+                message: format!("{}", e),
+            })?;
+
+    let mut names: Vec<String> = Vec::new();
+
+    while let Ok(State::Row) = statement.next() {
+        let name: String = statement
+            .read(0)
+            .map_err(|e| LoadingError::GenericSQLError {
+                message: format!("{}", e),
+            })?;
+
+        names.push(name);
+    }
+
+    Ok(names)
+}
+
 pub fn init_db_conn() -> Result<Connection, LoadingError> {
     let conn = sqlite::open("client.db").map_err(|e| LoadingError::GenericSQLError {
         message: format!("{}", e),
