@@ -1,18 +1,18 @@
 mod database;
-
-use std::error::Error;
 use clap::{Parser, Subcommand};
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() {
     let cli = MainCLI::parse();
     let connection = database::init_db_conn().unwrap();
 
     match &cli.command {
         Commands::CreateWallet { name } => {
-            database::create_private_key(&connection, name)?;
+            match database::create_private_key(&connection, name) {
+                Ok(_) => println!("Wallet {} successfully created!", name),
+                Err(e) => eprintln!("Error when creating wallet: {}", e),
+            }
         }
     }
 
-    Ok(())
 }
 
 #[derive(Parser)]
