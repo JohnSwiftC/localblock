@@ -36,10 +36,24 @@ pub fn delete_signing_key(conn: &Connection, name: &str) -> Result<(), DeletionE
     std::io::stdin().read_line(&mut input).unwrap();
 
     if name != input.trim() {
-        return Err(DeletionError::NameNotConfirmed { name: name.to_owned() });
+        return Err(DeletionError::NameNotConfirmed {
+            name: name.to_owned(),
+        });
     }
 
     let mut statement = conn.prepare("DELETE FROM keys WHERE name = ?").unwrap();
+    statement
+        .bind((1, name))
+        .map_err(|e| DeletionError::GenericSQLError {
+            message: format!("{}", e),
+        })?;
+
+    statement
+        .next()
+        .map_err(|e| DeletionError::GenericSQLError {
+            message: format!("{}", e),
+        })?;
+
     Ok(())
 }
 
@@ -101,4 +115,13 @@ impl std::fmt::Display for LoadingError {
 pub enum DeletionError {
     NameNotConfirmed { name: String },
     GenericSQLError { message: String },
+}
+
+impl std::fmt::Display for DeletionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DeletionError::NameNotConfirmed { name } => write!(f, "failed to confirm '{}'", name),
+            DeletionError::GenericSQLError { message } => write!(f, "{}", message),
+        }
+    }
 }

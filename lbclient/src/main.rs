@@ -12,6 +12,11 @@ fn main() {
             Ok(_) => println!("Wallet {} successfully created!", name),
             Err(e) => eprintln!("Error when creating wallet: {}", e),
         },
+
+        Commands::DeleteWallet { name } => match database::delete_signing_key(&connection, name) {
+            Ok(_) => println!("Wallet {} successfully deleted!", name),
+            Err(e) => eprintln!("Error when deleting wallet: {}", e),
+        }
     }
 }
 
@@ -28,4 +33,6 @@ struct MainCLI {
 enum Commands {
     #[command(about = "creates a new wallet signing key", long_about = None)]
     CreateWallet { name: String },
+    #[command(about = "deletes a currently held wallet signing key", long_about = None)]
+    DeleteWallet { name: String },
 }
