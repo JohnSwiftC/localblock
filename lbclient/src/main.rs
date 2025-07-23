@@ -26,6 +26,7 @@ struct MainCLI {
 
 #[derive(Subcommand)]
 enum Commands {
+    #[command(about = "creates a new wallet signing key", long_about = None)]
     CreateWallet {
         name: String,
     }
