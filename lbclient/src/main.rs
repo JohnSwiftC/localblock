@@ -1,4 +1,5 @@
 mod database;
+mod pretty;
 use clap::{Parser, Subcommand};
 fn main() {
     let cli = MainCLI::parse();
