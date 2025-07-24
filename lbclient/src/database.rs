@@ -82,23 +82,10 @@ pub fn load_signing_key(conn: &Connection, name: &str) -> Result<SigningKey, Loa
     }
 }
 
-pub enum KeyLoadResult {
-    Blob(Vec<u8>),
-    Hex(String),
-    Psk(String),
-}
-
-pub enum KeyLoadFormat {
-    Blob,
-    Hex,
-    Psk,
-}
-
 pub fn load_key_formatted(
     conn: &Connection,
     name: &str,
-    format: KeyLoadFormat,
-) -> Result<KeyLoadResult, LoadingError> {
+) -> Result<Vec<u8>, LoadingError> {
     let mut statement = conn
         .prepare("SELECT key FROM keys WHERE name = ?")
         .map_err(|e| LoadingError::GenericSQLError {
@@ -112,22 +99,11 @@ pub fn load_key_formatted(
         })?;
 
     if let Ok(State::Row) = statement.next() {
-        match format {
-            KeyLoadFormat::Blob => {
-                let key_blob: Vec<u8> =
-                    statement
-                        .read(0)
-                        .map_err(|e| LoadingError::GenericSQLError {
-                            message: format!("{}", e),
-                        })?;
-            }
-
-            KeyLoadFormat::Hex => (),
-            KeyLoadFormat::Psk => (),
-        }
+       
     }
 
-    Ok(KeyLoadResult::Hex(String::from("let me format")))
+    // Hold off warnings for now
+    Ok(Vec::new())
 }
 
 pub fn get_wallet_names(conn: &Connection) -> Result<Vec<String>, LoadingError> {
