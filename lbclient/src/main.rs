@@ -23,11 +23,13 @@ fn main() {
         Commands::ReadWalletNames => match database::get_wallet_names(&connection) {
             Ok(names) => {
                 if let Err(e) = pretty::show_wallet_names(&names) {
-                    eprintln!("Some error occured when formatting.");
+                    eprintln!("Some error occured when formatting: {}", e);
                 }
             }
             Err(e) => eprintln!("Error when reading wallet names: {}", e),
         },
+
+        Commands::ReadKey { blob: _ } => eprintln!("Feature not impld yet."),
     }
 }
 
@@ -49,4 +51,9 @@ enum Commands {
     #[command(about = "lists current wallets held in the local database", long_about = None)]
     #[command(name = "wallets")]
     ReadWalletNames,
+    #[command(about = "outputs a secret key with a specifed format", long_about = None)]
+    ReadKey {
+        #[arg(short, long)]
+        blob: bool,
+    },
 }

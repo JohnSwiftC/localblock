@@ -57,8 +57,8 @@ pub fn delete_signing_key(conn: &Connection, name: &str) -> Result<(), DeletionE
     Ok(())
 }
 
-pub fn load_signing_key(connection: &Connection, name: &str) -> Result<SigningKey, LoadingError> {
-    let mut statement = connection
+pub fn load_signing_key(conn: &Connection, name: &str) -> Result<SigningKey, LoadingError> {
+    let mut statement = conn
         .prepare("SELECT key FROM keys WHERE name = ?")
         .map_err(|e| LoadingError::GenericSQLError {
             message: format!("{}", e),
@@ -80,6 +80,40 @@ pub fn load_signing_key(connection: &Connection, name: &str) -> Result<SigningKe
     } else {
         Err(LoadingError::NameNotFound)
     }
+}
+
+pub enum KeyLoadResult {
+    Blob(Vec<u8>),
+    Hex(String),
+    Psk(String),
+}
+
+pub enum KeyLoadFormat {
+    Blob,
+    Hex,
+    Psk,
+}
+
+pub fn load_key_formatted(
+    conn: &Connection,
+    name: &str,
+    format: KeyLoadFormat,
+) -> Result<KeyLoadResult, LoadingError> {
+    let mut statement = conn
+        .prepare("SELECT key FROM keys WHERE name = ?")
+        .map_err(|e| LoadingError::GenericSQLError {
+            message: format!("{}", e),
+        })?;
+
+    statement
+        .bind((1, name))
+        .map_err(|e| LoadingError::GenericSQLError {
+            message: format!("{}", e),
+        })?;
+
+    if let Ok(State::Row) = statement.next() {}
+
+    Ok(KeyLoadResult::Hex(String::from("let me format")))
 }
 
 pub fn get_wallet_names(conn: &Connection) -> Result<Vec<String>, LoadingError> {
