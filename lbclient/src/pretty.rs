@@ -16,7 +16,7 @@ pub fn show_wallet_names(names: &[String]) -> Result<(), Box<dyn Error + 'static
 
     let mut i = 0;
     while i < names.len() {
-        println!("{}", names[i]);
+        println!("- {}", names[i]);
         i += 1;
     }
 

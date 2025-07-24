@@ -19,11 +19,11 @@ fn main() {
             Err(e) => eprintln!("Error when deleting wallet: {}", e),
         },
 
+        // TODO: Config.yaml to toggle pretty print, might break some systeams
         Commands::ReadWalletNames => match database::get_wallet_names(&connection) {
             Ok(names) => {
-                println!("CURRENT WALLETS:");
-                for n in names {
-                    println!("{}", n);
+                if let Err(e) = pretty::show_wallet_names(&names) {
+                    eprintln!("Some error occured when formatting.");
                 }
             }
             Err(e) => eprintln!("Error when reading wallet names: {}", e),
