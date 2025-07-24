@@ -1,9 +1,13 @@
 mod database;
 mod pretty;
+use std::io::Write;
+
 use clap::{Parser, Subcommand};
 fn main() {
     let cli = MainCLI::parse();
-    let connection = match database::init_db_conn() {
+    let database_path = cli.database.unwrap_or("client.db".to_owned());
+
+    let connection = match database::init_db_conn(&database_path) {
         Ok(c) => c,
         Err(e) => panic!("Failed to load local database: {}", e),
     };
@@ -29,7 +33,15 @@ fn main() {
             Err(e) => eprintln!("Error when reading wallet names: {}", e),
         },
 
-        Commands::ReadKey { blob: _ } => eprintln!("Feature not impld yet."),
+        Commands::ReadKey { name } => match database::get_key_blob(&connection, name) {
+            Ok(blob) => {
+                let mut stdout = std::io::stdout();
+                stdout.write_all(&blob[..]);
+                stdout.flush();
+            }
+
+            Err(e) => eprintln!("Some error occured when retrieving {}: {}", name, e),
+        },
     }
 }
 
@@ -38,6 +50,8 @@ fn main() {
 #[command(version = "0.0")]
 #[command(about = "Simple CLI for interacting with localblock networks!", long_about = None)]
 struct MainCLI {
+    #[arg(long, short)]
+    database: Option<String>,
     #[command(subcommand)]
     command: Commands,
 }
@@ -51,9 +65,6 @@ enum Commands {
     #[command(about = "lists current wallets held in the local database", long_about = None)]
     #[command(name = "wallets")]
     ReadWalletNames,
-    #[command(about = "outputs a secret key with a specifed format", long_about = None)]
-    ReadKey {
-        #[arg(short, long)]
-        blob: bool,
-    },
+    #[command(about = "outputs a secret key as bytes for storage elsewhere", long_about = None)]
+    ReadKey { name: String },
 }
