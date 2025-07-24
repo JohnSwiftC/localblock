@@ -29,7 +29,7 @@ pub fn create_private_key(conn: &Connection, name: &str) -> Result<SigningKey, L
 
 /// Deletes a signing key with extra verifications
 pub fn delete_signing_key(conn: &Connection, name: &str) -> Result<(), DeletionError> {
-    print!(
+    println!(
         "Re-input the keys name to confirm that you wish to delete this key. THIS CANNOT BE UNDONE: "
     );
     let mut input = String::new();
