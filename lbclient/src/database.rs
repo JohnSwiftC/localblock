@@ -111,7 +111,21 @@ pub fn load_key_formatted(
             message: format!("{}", e),
         })?;
 
-    if let Ok(State::Row) = statement.next() {}
+    if let Ok(State::Row) = statement.next() {
+        match format {
+            KeyLoadFormat::Blob => {
+                let key_blob: Vec<u8> =
+                    statement
+                        .read(0)
+                        .map_err(|e| LoadingError::GenericSQLError {
+                            message: format!("{}", e),
+                        })?;
+            }
+
+            KeyLoadFormat::Hex => (),
+            KeyLoadFormat::Psk => (),
+        }
+    }
 
     Ok(KeyLoadResult::Hex(String::from("let me format")))
 }
