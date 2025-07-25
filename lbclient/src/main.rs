@@ -42,6 +42,8 @@ fn main() {
 
             Err(e) => eprintln!("Some error occured when retrieving {}: {}", name, e),
         },
+
+        Commands::SendCoin { recip } => eprintln!("This does nothing currently..."),
     }
 }
 
@@ -67,4 +69,6 @@ enum Commands {
     ReadWalletNames,
     #[command(about = "outputs a secret key as bytes for storage elsewhere", long_about = None)]
     ReadKey { name: String },
+    #[command(about = "transfers one coin to a recipient at the specified auth node", long_about = None)]
+    SendCoin { recip: String },
 }
