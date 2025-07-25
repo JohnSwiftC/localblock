@@ -2,6 +2,7 @@ use p256::ecdsa::SigningKey;
 use rand_core::OsRng;
 use sqlite::Connection;
 use sqlite::State;
+use std::error::Error;
 
 /// Creates and stores a signing key
 pub fn create_private_key(conn: &Connection, name: &str) -> Result<SigningKey, LoadingError> {
@@ -82,10 +83,7 @@ pub fn load_signing_key(conn: &Connection, name: &str) -> Result<SigningKey, Loa
     }
 }
 
-pub fn load_key_formatted(
-    conn: &Connection,
-    name: &str,
-) -> Result<Vec<u8>, LoadingError> {
+pub fn get_key_blob(conn: &Connection, name: &str) -> Result<Vec<u8>, LoadingError> {
     let mut statement = conn
         .prepare("SELECT key FROM keys WHERE name = ?")
         .map_err(|e| LoadingError::GenericSQLError {
@@ -99,11 +97,17 @@ pub fn load_key_formatted(
         })?;
 
     if let Ok(State::Row) = statement.next() {
-       
-    }
+        let key_blob: Vec<u8> = statement
+            .read(0)
+            .map_err(|e| LoadingError::GenericSQLError {
+                message: format!("{}", e),
+            })?;
 
-    // Hold off warnings for now
-    Ok(Vec::new())
+        return Ok(key_blob);
+    } else {
+        return Err(LoadingError::NameNotFound);
+        // make sure i deal with this lol
+    }
 }
 
 pub fn get_wallet_names(conn: &Connection) -> Result<Vec<String>, LoadingError> {
@@ -128,8 +132,8 @@ pub fn get_wallet_names(conn: &Connection) -> Result<Vec<String>, LoadingError> 
     Ok(names)
 }
 
-pub fn init_db_conn() -> Result<Connection, LoadingError> {
-    let conn = sqlite::open("client.db").map_err(|e| LoadingError::GenericSQLError {
+pub fn init_db_conn(path: &str) -> Result<Connection, LoadingError> {
+    let conn = sqlite::open(path).map_err(|e| LoadingError::GenericSQLError {
         message: format!("{}", e),
     })?;
     conn.execute("CREATE TABLE IF NOT EXISTS keys (name TEXT PRIMARY KEY, key BLOB)")
@@ -139,6 +143,7 @@ pub fn init_db_conn() -> Result<Connection, LoadingError> {
     Ok(conn)
 }
 
+#[derive(Debug)]
 pub enum LoadingError {
     NameNotFound,
     KeyFailedLoad,
@@ -157,7 +162,9 @@ impl std::fmt::Display for LoadingError {
         }
     }
 }
+impl Error for LoadingError {}
 
+#[derive(Debug)]
 pub enum DeletionError {
     NameNotConfirmed { name: String },
     GenericSQLError { message: String },
@@ -169,5 +176,23 @@ impl std::fmt::Display for DeletionError {
             DeletionError::NameNotConfirmed { name } => write!(f, "failed to confirm '{}'", name),
             DeletionError::GenericSQLError { message } => write!(f, "{}", message),
         }
+    }
+}
+impl Error for DeletionError {}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use std::error::Error;
+
+    /// This test relies on you having a tests.db with a properly created key 'test' within
+    #[test]
+    fn does_key_load() -> Result<(), Box<dyn Error + 'static>> {
+        let conn = init_db_conn("tests.db")?;
+
+        let key     = load_signing_key(&conn, "test")?;
+
+        Ok(())
     }
 }
