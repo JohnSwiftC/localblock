@@ -1,4 +1,5 @@
 use p256::ecdsa::{SigningKey, VerifyingKey};
+use p256::pkcs8::{EncodePublicKey, EncodePrivateKey};
 use rand_core::OsRng;
 use sqlite::Connection;
 use sqlite::State;
@@ -86,7 +87,13 @@ pub fn load_signing_key(conn: &Connection, name: &str) -> Result<SigningKey, Loa
 pub fn get_signing_key_pem(conn: &Connection, name: &str) -> Result<String, LoadingError> {
     let signing_key = load_signing_key(conn, name)?;
 
-    Ok(String::from("placeholder"))
+    // I'm pretty sure unwrapping here is completely fine. I think it returns a result in the case
+    // that someone implementing EncodePrivateKey writes the required function incorrectly
+    // So i'm just hoping that the library properly handles in own native struct :)
+    let pem = signing_key.to_pkcs8_pem(p256::pkcs8::LineEnding::CRLF).unwrap();
+
+    Ok(pem.to_string())
+
 }
 
 pub fn load_verifying_key(conn: &Connection, name: &str) -> Result<VerifyingKey, LoadingError> {

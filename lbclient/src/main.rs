@@ -3,7 +3,6 @@ mod pretty;
 use std::io::Write;
 
 use clap::{Parser, Subcommand};
-use p256::ecdsa::VerifyingKey;
 fn main() {
     let cli = MainCLI::parse();
     let database_path = cli.database.unwrap_or("client.db".to_owned());
@@ -37,8 +36,8 @@ fn main() {
         Commands::ReadKey { name } => match database::get_signing_key_pem(&connection, name) {
             Ok(blob) => {
                 let mut stdout = std::io::stdout();
-                stdout.write_all(blob.as_bytes());
-                stdout.flush();
+                let _ = stdout.write_all(blob.as_bytes());
+                let _ = stdout.flush();
             }
 
             Err(e) => eprintln!("Some error occured when retrieving {}: {}", name, e),
