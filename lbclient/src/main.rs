@@ -62,7 +62,7 @@ fn main() {
 #[command(version = "0.0")]
 #[command(about = "Simple CLI for interacting with localblock networks!", long_about = None)]
 struct MainCLI {
-    #[arg(long, short)]
+    #[arg(long, short, help = "optionally specify a different wallet database than the default")]
     database: Option<String>,
     #[command(subcommand)]
     command: Commands,
