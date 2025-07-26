@@ -14,7 +14,7 @@ fn main() {
     };
 
     match &cli.command {
-        Commands::CreateWallet { name } => match database::create_private_key(&connection, name) {
+        Commands::CreateWallet { name } => match database::create_signing_key(&connection, name) {
             Ok(_) => println!("Wallet {} successfully created!", name),
             Err(e) => eprintln!("Error when creating wallet: {}", e),
         },
@@ -34,10 +34,10 @@ fn main() {
             Err(e) => eprintln!("Error when reading wallet names: {}", e),
         },
 
-        Commands::ReadKey { name } => match database::get_key_blob(&connection, name) {
+        Commands::ReadKey { name } => match database::get_signing_key_pem(&connection, name) {
             Ok(blob) => {
                 let mut stdout = std::io::stdout();
-                stdout.write_all(&blob[..]);
+                stdout.write_all(blob.as_bytes());
                 stdout.flush();
             }
 

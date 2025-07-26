@@ -5,7 +5,7 @@ use sqlite::State;
 use std::error::Error;
 
 /// Creates and stores a signing key
-pub fn create_private_key(conn: &Connection, name: &str) -> Result<SigningKey, LoadingError> {
+pub fn create_signing_key(conn: &Connection, name: &str) -> Result<SigningKey, LoadingError> {
     let key = SigningKey::random(&mut OsRng);
     let mut statement = conn
         .prepare("INSERT INTO keys (name, key) VALUES (?, ?)")
@@ -83,31 +83,10 @@ pub fn load_signing_key(conn: &Connection, name: &str) -> Result<SigningKey, Loa
     }
 }
 
-pub fn get_key_blob(conn: &Connection, name: &str) -> Result<Vec<u8>, LoadingError> {
-    let mut statement = conn
-        .prepare("SELECT key FROM keys WHERE name = ?")
-        .map_err(|e| LoadingError::GenericSQLError {
-            message: format!("{}", e),
-        })?;
+pub fn get_signing_key_pem(conn: &Connection, name: &str) -> Result<String, LoadingError> {
+    let signing_key = load_signing_key(conn, name)?;
 
-    statement
-        .bind((1, name))
-        .map_err(|e| LoadingError::GenericSQLError {
-            message: format!("{}", e),
-        })?;
-
-    if let Ok(State::Row) = statement.next() {
-        let key_blob: Vec<u8> = statement
-            .read(0)
-            .map_err(|e| LoadingError::GenericSQLError {
-                message: format!("{}", e),
-            })?;
-
-        return Ok(key_blob);
-    } else {
-        return Err(LoadingError::NameNotFound);
-        // make sure i deal with this lol
-    }
+    Ok(String::from("placeholder"))
 }
 
 pub fn load_verifying_key(conn: &Connection, name: &str) -> Result<VerifyingKey, LoadingError> {
