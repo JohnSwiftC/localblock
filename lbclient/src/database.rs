@@ -102,6 +102,14 @@ pub fn load_verifying_key(conn: &Connection, name: &str) -> Result<VerifyingKey,
     Ok(public_key)
 }
 
+pub fn get_verifying_key_pem(conn: &Connection, name: &str) -> Result<String, LoadingError> {
+    let signing_key = load_signing_key(conn, name)?;
+
+    // same unwrap logic as the previous function
+    let verifying_key = signing_key.verifying_key().to_public_key_pem(p256::pkcs8::LineEnding::CRLF).unwrap();
+    Ok(verifying_key)
+}
+
 pub fn get_wallet_names(conn: &Connection) -> Result<Vec<String>, LoadingError> {
     let mut statement =
         conn.prepare("SELECT name FROM keys")
