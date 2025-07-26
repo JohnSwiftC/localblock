@@ -34,23 +34,26 @@ fn main() {
         },
 
         Commands::PrivateKey { name } => match database::get_signing_key_pem(&connection, name) {
-            Ok(blob) => {
+            Ok(pem) => {
                 let mut stdout = std::io::stdout();
-                let _ = stdout.write_all(blob.as_bytes());
+                let _ = stdout.write_all(pem.as_bytes());
                 let _ = stdout.flush();
             }
 
             Err(e) => eprintln!("Some error occured when retrieving {}: {}", name, e),
         },
+        
+        Commands::PublicKey { name } => match database::get_verifying_key_pem(&connection, name) {
+            Ok(pem) => {
+                let mut stdout = std::io::stdout();
+                let _ = stdout.write_all(pem.as_bytes());
+                let _ = stdout.flush();
+            }
+
+            Err(e) => eprintln!("Some error occured when retrieving {}: {}", name, e),
+        }
 
         Commands::SendCoin { recip } => eprintln!("This does nothing currently..."),
-        
-        Commands::PublicKey { name } => match database::load_verifying_key(&connection, name) {
-            Ok(VerifyingKey) => {
-
-            },
-            Err(e) => eprintln!("Error when loading verifying key..."),
-        }
     }
 }
 
