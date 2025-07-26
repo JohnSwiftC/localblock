@@ -1,4 +1,4 @@
-use p256::ecdsa::SigningKey;
+use p256::ecdsa::{SigningKey, VerifyingKey};
 use rand_core::OsRng;
 use sqlite::Connection;
 use sqlite::State;
@@ -108,6 +108,12 @@ pub fn get_key_blob(conn: &Connection, name: &str) -> Result<Vec<u8>, LoadingErr
         return Err(LoadingError::NameNotFound);
         // make sure i deal with this lol
     }
+}
+
+pub fn load_verifying_key(conn: &Connection, name: &str) -> Result<VerifyingKey, LoadingError> {
+    let private_key = load_signing_key(conn, name)?;
+    let public_key = private_key.verifying_key().to_owned();
+    Ok(public_key)
 }
 
 pub fn get_wallet_names(conn: &Connection) -> Result<Vec<String>, LoadingError> {

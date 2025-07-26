@@ -3,6 +3,7 @@ mod pretty;
 use std::io::Write;
 
 use clap::{Parser, Subcommand};
+use p256::ecdsa::VerifyingKey;
 fn main() {
     let cli = MainCLI::parse();
     let database_path = cli.database.unwrap_or("client.db".to_owned());
@@ -44,6 +45,13 @@ fn main() {
         },
 
         Commands::SendCoin { recip } => eprintln!("This does nothing currently..."),
+        
+        Commands::PublicKey { name } => match database::load_verifying_key(&connection, name) {
+            Ok(VerifyingKey) => {
+
+            },
+            Err(e) => eprintln!("Error when loading verifying key..."),
+        }
     }
 }
 
@@ -71,4 +79,6 @@ enum Commands {
     ReadKey { name: String },
     #[command(about = "transfers one coin to a recipient at the specified auth node", long_about = None)]
     SendCoin { recip: String },
+    #[command(about = "outputs a wallets public key")]
+    PublicKey { name: String },
 }
