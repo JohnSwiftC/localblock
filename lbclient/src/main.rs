@@ -77,10 +77,10 @@ enum Commands {
     #[command(about = "lists current wallets held in the local database", long_about = None)]
     #[command(name = "wallets")]
     ReadWalletNames,
-    #[command(about = "outputs a wallet secret key as a pkcs8 pem for storage elsewhere", long_about = None)]
+    #[command(about = "outputs a wallet secret key as a pkcs8 pem", long_about = None)]
     PrivateKey { name: String },
     #[command(about = "transfers one coin to a recipient at the specified auth node", long_about = None)]
     SendCoin { recip: String },
-    #[command(about = "outputs a wallet public key as a pkcs8 pem for storage elsewhere", long_about = None)]
+    #[command(about = "outputs a wallet public key as a pkcs8 pem", long_about = None)]
     PublicKey { name: String },
 }
