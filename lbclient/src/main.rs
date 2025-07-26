@@ -33,7 +33,7 @@ fn main() {
             Err(e) => eprintln!("Error when reading wallet names: {}", e),
         },
 
-        Commands::ReadKey { name } => match database::get_signing_key_pem(&connection, name) {
+        Commands::PrivateKey { name } => match database::get_signing_key_pem(&connection, name) {
             Ok(blob) => {
                 let mut stdout = std::io::stdout();
                 let _ = stdout.write_all(blob.as_bytes());
@@ -74,10 +74,10 @@ enum Commands {
     #[command(about = "lists current wallets held in the local database", long_about = None)]
     #[command(name = "wallets")]
     ReadWalletNames,
-    #[command(about = "outputs a secret key as a pkcs8 pem for storage elsewhere", long_about = None)]
-    ReadKey { name: String },
+    #[command(about = "outputs a wallet secret key as a pkcs8 pem for storage elsewhere", long_about = None)]
+    PrivateKey { name: String },
     #[command(about = "transfers one coin to a recipient at the specified auth node", long_about = None)]
     SendCoin { recip: String },
-    #[command(about = "outputs a wallets public key")]
+    #[command(about = "outputs a wallet public key as a pkcs8 pem for storage elsewhere", long_about = None)]
     PublicKey { name: String },
 }
