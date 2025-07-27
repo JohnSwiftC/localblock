@@ -92,7 +92,7 @@ enum Commands {
     SendCoin { recip: String },
     #[command(about = "outputs a wallet public key as a pkcs8 pem", long_about = None)]
     PublicKey { name: String },
-    #[command(about = "import a pkcs8 private key as a new wallet", long_about = "takes a path to a pkcs8 private pem and imports it with the given name as a wallet")]
+    #[command(about = "import a pkcs8 private key as a new wallet", long_about = None)]
     ImportWallet {
         #[arg(short, long)]
         pem: String,
