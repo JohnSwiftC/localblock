@@ -19,7 +19,7 @@ fn main() {
         },
 
         Commands::DeleteWallet { name } => match database::delete_signing_key(&connection, name) {
-            Ok(_) => println!("Wallet {} successfully deleted!", name),
+            Ok(_) => pretty::wallet_deleted_message(name).expect("Some formatting error occured."),
             Err(e) => eprintln!("Error when deleting wallet: {}", e),
         },
 

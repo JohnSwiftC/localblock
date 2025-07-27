@@ -38,3 +38,19 @@ pub fn wallet_created_message(name: &str) -> Result<(), Box<dyn Error + 'static>
 
     Ok(())
 }
+
+pub fn wallet_deleted_message(name: &str) -> Result<(), Box<dyn Error + 'static>> {
+    let mut stream = StandardStream::stdout(ColorChoice::Auto);
+    let mut spec = ColorSpec::new();
+    spec.set_intense(true);
+    let _ = stream.set_color(&spec); // ignore potential error
+    write!(stream, "Wallet ")?;
+    spec.set_fg(Some(Color::Green));
+    stream.set_color(&spec)?;
+    write!(stream, "{}", name)?;
+    spec.set_fg(None);
+    stream.set_color(&spec)?;
+    write!(stream, " successfully deleted!")?;
+
+    Ok(())
+}
