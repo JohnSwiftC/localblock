@@ -28,13 +28,13 @@ pub fn wallet_created_message(name: &str) -> Result<(), Box<dyn Error + 'static>
     let mut spec = ColorSpec::new();
     spec.set_intense(true);
     let _ = stream.set_color(&spec); // ignore potential error
-    write!(stream, "New wallet ");
+    write!(stream, "New wallet ")?;
     spec.set_fg(Some(Color::Green));
-    stream.set_color(&spec);
-    write!(stream, "{}", name);
+    stream.set_color(&spec)?;
+    write!(stream, "{}", name)?;
     spec.set_fg(None);
-    stream.set_color(&spec);
-    write!(stream, " created!");
+    stream.set_color(&spec)?;
+    write!(stream, " created!")?;
 
     Ok(())
 }
