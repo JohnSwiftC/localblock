@@ -1,12 +1,16 @@
 use sqlite::Connection;
 use std::error::Error;
 
-
 pub fn init_db_conn(path: &str) -> Result<Connection, LoadingError> {
     let conn = sqlite::open(path).map_err(|e| LoadingError::GenericSQLError {
         message: format!("{}", e),
     })?;
-    conn.execute("CREATE TABLE IF NOT EXISTS keys (name TEXT PRIMARY KEY, key BLOB)")
+    conn.execute("CREATE TABLE IF NOT EXISTS ledgers (key BLOB PRIMARY KEY, coins INTEGER")
+        .map_err(|e| LoadingError::GenericSQLError {
+            message: format!("{}", e),
+        })?;
+
+    conn.execute("CREATE TABLE IF NOT EXISTS history (transaction BLOB PRIMARY KEY)")
         .map_err(|e| LoadingError::GenericSQLError {
             message: format!("{}", e),
         })?;
