@@ -234,7 +234,7 @@ mod tests {
     fn does_key_load() -> Result<(), Box<dyn Error + 'static>> {
         let conn = init_db_conn("tests.db")?;
 
-        let key = load_signing_key(&conn, "test")?;
+        let _key = load_signing_key(&conn, "test")?;
 
         Ok(())
     }

@@ -58,7 +58,7 @@ fn main() {
             Err(e) => eprintln!("Wallet {} could not be imported: {}", name, e),
         }
 
-        Commands::SendCoin { recip } => eprintln!("This does nothing currently..."),
+        Commands::SendCoin { recip: _ } => eprintln!("This does nothing currently..."),
     }
 }
 
