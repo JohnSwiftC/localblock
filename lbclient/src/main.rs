@@ -42,7 +42,7 @@ fn main() {
 
             Err(e) => eprintln!("Some error occured when retrieving {}: {}", name, e),
         },
-        
+
         Commands::PublicKey { name } => match database::get_verifying_key_pem(&connection, name) {
             Ok(pem) => {
                 let mut stdout = std::io::stdout();
@@ -51,7 +51,9 @@ fn main() {
             }
 
             Err(e) => eprintln!("Some error occured when retrieving {}: {}", name, e),
-        }
+        },
+
+        Commands::ImportWallet { pem, name} => eprintln!("This does nothing currently..."),
 
         Commands::SendCoin { recip } => eprintln!("This does nothing currently..."),
     }
@@ -62,7 +64,11 @@ fn main() {
 #[command(version = "0.0")]
 #[command(about = "Simple CLI for interacting with localblock networks!", long_about = None)]
 struct MainCLI {
-    #[arg(long, short, help = "optionally specify a different wallet database than the default")]
+    #[arg(
+        long,
+        short,
+        help = "optionally specify a different wallet database than the default"
+    )]
     database: Option<String>,
     #[command(subcommand)]
     command: Commands,
@@ -83,4 +89,11 @@ enum Commands {
     SendCoin { recip: String },
     #[command(about = "outputs a wallet public key as a pkcs8 pem", long_about = None)]
     PublicKey { name: String },
+    #[command(about = "import a pkcs8 private key as a new wallet", long_about = None)]
+    ImportWallet {
+        #[arg(short, long)]
+        pem: String,
+        #[arg(short, long)]
+        name: String
+    },
 }

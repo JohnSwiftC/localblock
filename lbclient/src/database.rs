@@ -1,13 +1,41 @@
 use p256::ecdsa::{SigningKey, VerifyingKey};
-use p256::pkcs8::{EncodePublicKey, EncodePrivateKey};
+use p256::pkcs8::{DecodePrivateKey, EncodePrivateKey, EncodePublicKey};
 use rand_core::OsRng;
+
 use sqlite::Connection;
 use sqlite::State;
+
 use std::error::Error;
 
 /// Creates and stores a signing key
 pub fn create_signing_key(conn: &Connection, name: &str) -> Result<SigningKey, LoadingError> {
     let key = SigningKey::random(&mut OsRng);
+    let mut statement = conn
+        .prepare("INSERT INTO keys (name, key) VALUES (?, ?)")
+        .unwrap();
+    statement
+        .bind((1, name))
+        .map_err(|e| LoadingError::GenericSQLError {
+            message: format!("{}", e),
+        })?;
+    statement
+        .bind((2, key.to_bytes().as_slice()))
+        .map_err(|e| LoadingError::GenericSQLError {
+            message: format!("{}", e),
+        })?;
+    statement
+        .next()
+        .map_err(|e| LoadingError::GenericSQLError {
+            message: format!("{}", e),
+        })?;
+    Ok(key)
+}
+
+pub fn import_signing_key_pem(conn: &Connection, name: &str, pem: &str) -> Result<SigningKey, LoadingError> {
+    let key = SigningKey::from_pkcs8_pem(pem).map_err(|e| {
+        LoadingError::GenericCryptoError { message: format!("{}", e) }
+    })?;
+
     let mut statement = conn
         .prepare("INSERT INTO keys (name, key) VALUES (?, ?)")
         .unwrap();
@@ -90,10 +118,11 @@ pub fn get_signing_key_pem(conn: &Connection, name: &str) -> Result<String, Load
     // I'm pretty sure unwrapping here is completely fine. I think it returns a result in the case
     // that someone implementing EncodePrivateKey writes the required function incorrectly
     // So i'm just hoping that the library properly handles in own native struct :)
-    let pem = signing_key.to_pkcs8_pem(p256::pkcs8::LineEnding::CRLF).unwrap();
+    let pem = signing_key
+        .to_pkcs8_pem(p256::pkcs8::LineEnding::CRLF)
+        .unwrap();
 
     Ok(pem.to_string())
-
 }
 
 pub fn load_verifying_key(conn: &Connection, name: &str) -> Result<VerifyingKey, LoadingError> {
@@ -106,7 +135,10 @@ pub fn get_verifying_key_pem(conn: &Connection, name: &str) -> Result<String, Lo
     let signing_key = load_signing_key(conn, name)?;
 
     // same unwrap logic as the previous function
-    let verifying_key = signing_key.verifying_key().to_public_key_pem(p256::pkcs8::LineEnding::CRLF).unwrap();
+    let verifying_key = signing_key
+        .verifying_key()
+        .to_public_key_pem(p256::pkcs8::LineEnding::CRLF)
+        .unwrap();
     Ok(verifying_key)
 }
 
@@ -148,6 +180,7 @@ pub enum LoadingError {
     NameNotFound,
     KeyFailedLoad,
     GenericSQLError { message: String },
+    GenericCryptoError { message: String },
 }
 
 impl std::fmt::Display for LoadingError {
@@ -159,6 +192,7 @@ impl std::fmt::Display for LoadingError {
                 "key is not properly formatted in the database, erase the entry and attempt to restore"
             ),
             LoadingError::GenericSQLError { message } => write!(f, "{}", message),
+            LoadingError::GenericCryptoError { message } => write!(f, "{}", message),
         }
     }
 }
@@ -191,7 +225,7 @@ mod tests {
     fn does_key_load() -> Result<(), Box<dyn Error + 'static>> {
         let conn = init_db_conn("tests.db")?;
 
-        let key     = load_signing_key(&conn, "test")?;
+        let key = load_signing_key(&conn, "test")?;
 
         Ok(())
     }
