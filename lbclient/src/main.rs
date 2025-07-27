@@ -14,7 +14,7 @@ fn main() {
 
     match &cli.command {
         Commands::CreateWallet { name } => match database::create_signing_key(&connection, name) {
-            Ok(_) => println!("Wallet {} successfully created!", name),
+            Ok(_) => pretty::wallet_created_message(name).expect("Some formatting error occured"),
             Err(e) => eprintln!("Error when creating wallet: {}", e),
         },
 
@@ -53,7 +53,10 @@ fn main() {
             Err(e) => eprintln!("Some error occured when retrieving {}: {}", name, e),
         },
 
-        Commands::ImportWallet { pem, name} => eprintln!("This does nothing currently..."),
+        Commands::ImportWallet { pem, name} => match database::import_signing_key_pem(&connection, name, pem) {
+            Ok(_) => pretty::wallet_created_message(name).expect("Some formatting error occured"),
+            Err(e) => eprintln!("Wallet {} could not be imported: {}", name, e),
+        }
 
         Commands::SendCoin { recip } => eprintln!("This does nothing currently..."),
     }

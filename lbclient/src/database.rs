@@ -57,11 +57,13 @@ pub fn import_signing_key_pem(conn: &Connection, name: &str, pem: &str) -> Resul
     Ok(key)
 }
 
+use std::io::Write;
 /// Deletes a signing key with extra verifications
 pub fn delete_signing_key(conn: &Connection, name: &str) -> Result<(), DeletionError> {
-    println!(
+    print!(
         "Re-input the keys name to confirm that you wish to delete this key. THIS CANNOT BE UNDONE: "
     );
+    std::io::stdout().flush().unwrap();
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).unwrap();
 
