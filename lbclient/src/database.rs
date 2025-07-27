@@ -6,6 +6,7 @@ use sqlite::Connection;
 use sqlite::State;
 
 use std::error::Error;
+use std::path::PathBuf;
 
 /// Creates and stores a signing key
 pub fn create_signing_key(conn: &Connection, name: &str) -> Result<SigningKey, LoadingError> {
@@ -31,8 +32,12 @@ pub fn create_signing_key(conn: &Connection, name: &str) -> Result<SigningKey, L
     Ok(key)
 }
 
-pub fn import_signing_key_pem(conn: &Connection, name: &str, pem: &str) -> Result<SigningKey, LoadingError> {
-    let key = SigningKey::from_pkcs8_pem(pem).map_err(|e| {
+pub fn import_signing_key_pem(conn: &Connection, name: &str, path: &PathBuf) -> Result<SigningKey, LoadingError> {
+    let pem = std::fs::read_to_string(path).map_err(|e| {
+        LoadingError::GenericFileError { message: format!("{}", e) }
+    })?;
+
+    let key = SigningKey::from_pkcs8_pem(&pem).map_err(|e| {
         LoadingError::GenericCryptoError { message: format!("{}", e) }
     })?;
 
@@ -183,6 +188,7 @@ pub enum LoadingError {
     KeyFailedLoad,
     GenericSQLError { message: String },
     GenericCryptoError { message: String },
+    GenericFileError { message: String },
 }
 
 impl std::fmt::Display for LoadingError {
@@ -195,6 +201,7 @@ impl std::fmt::Display for LoadingError {
             ),
             LoadingError::GenericSQLError { message } => write!(f, "{}", message),
             LoadingError::GenericCryptoError { message } => write!(f, "{}", message),
+            LoadingError::GenericFileError { message } => write!(f, "{}", message),
         }
     }
 }

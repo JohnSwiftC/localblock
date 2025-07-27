@@ -1,6 +1,6 @@
 mod database;
 mod pretty;
-use std::io::Write;
+use std::{io::Write, path::{PathBuf}};
 
 use clap::{Parser, Subcommand};
 fn main() {
@@ -94,8 +94,8 @@ enum Commands {
     PublicKey { name: String },
     #[command(about = "import a pkcs8 private key as a new wallet", long_about = None)]
     ImportWallet {
-        #[arg(short, long)]
-        pem: String,
+        #[arg(short, long, value_name = "PATH")]
+        pem: PathBuf,
         #[arg(short, long)]
         name: String
     },
