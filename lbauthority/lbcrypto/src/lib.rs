@@ -57,4 +57,23 @@ impl Transaction {
 
         self.verifying_key.verify(&bytes[..], &self.signature).is_ok()
     }
+
+    pub fn verify_txid(&self) -> bool {
+        let mut hasher = Sha256::new();
+        hasher.update(self.signature.to_bytes());
+        hasher.update(self.verifying_key.to_sec1_bytes());
+
+        for input in &self.inputs {
+            hasher.update(&input.txid[..]);
+            hasher.update(&input.index.to_le_bytes());
+        }
+
+        for output in &self.outputs {
+            hasher.update(&output.recip[..]);
+            hasher.update(&output.amount.to_le_bytes()[..]);
+        }
+
+        let hash: [u8; 32] = hasher.finalize().into();
+        &hash[..] == &self.txid[..]
+    }
 }
