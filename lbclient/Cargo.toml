@@ -9,3 +9,4 @@ sqlite = "0.37.0"
 rand_core = "0.6.4"
 clap = { version = "4.5.41", features = ["derive"] }
 termcolor = "1.4.1"
+lbcrypto = { path = "../lbauthority/lbcrypto" }

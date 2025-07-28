@@ -2,6 +2,8 @@ mod database;
 mod pretty;
 use std::{io::Write, path::{PathBuf}};
 
+use lbcrypto;
+
 use clap::{Parser, Subcommand};
 fn main() {
     let cli = MainCLI::parse();
