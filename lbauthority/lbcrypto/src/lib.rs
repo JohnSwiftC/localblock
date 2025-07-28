@@ -6,7 +6,14 @@ pub struct Block {
 
 }
 
-type Txid = [u8; 32]; // Is just a sha256 hash
+/// Double hash of a transaction to be used as the id
+type Txid = [u8; 32];
+
+/// Double hash of a public wallet address to signify a recipient.
+/// Important to note that because a wallers value is actually held in
+/// unspent outputs, it does not need to be unhashed. Anyone can calculate
+/// their own wallets value by double hashing their address
+/// and searching for it in the UTXO
 type HashedPublic = [u8; 32];
 
 /// represents an input in a transaction
