@@ -47,6 +47,12 @@ impl BlockHeader {
         hasher.update(&self.previous_hash[..]);
         hasher.update(&self.merkle_root[..]);
 
+        let inter: HashedBlock = hasher.finalize().into();
+
+        // Second go around ;)
+
+        hasher = Sha256::new();
+        hasher.update(&inter[..]);
         hasher.finalize().into()
     }  
 
