@@ -3,6 +3,11 @@ name = "lbauthority"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = [
+    "lbcrypto",
+]
+
 [dependencies]
 p256 = { version = "0.13.2", features = ["ecdsa"] }
 sqlite = "0.37.0"
