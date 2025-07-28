@@ -1,5 +1,30 @@
 use sha2::{Sha256, Digest};
 
+/// Double hash of a transaction to be used as the id
+type Txid = [u8; 32];
+
+/// Double hash of a public wallet address to signify a recipient.
+/// Important to note that because a wallers value is actually held in
+/// unspent outputs, it does not need to be unhashed. Anyone can calculate
+/// their own wallets value by double hashing their address
+/// and searching for it in the UTXO
+type HashedPublic = [u8; 32];
+
+type HashedBlock = [u8; 32];
+
+/// represents an input in a transaction
+/// references a previous transaction, and the index of the specific
+/// output that is trying to be spent
+struct TxInput {
+    txid: Txid,
+    index: u8,
+}
+
+struct TxOutput {
+    recip: HashedPublic,
+    amount: u32,
+}
+
 /// The representation of a block within a localblocl
 /// network. Similar to bitcoin's.
 pub struct Block {
@@ -10,15 +35,34 @@ pub struct Block {
 #[derive(Debug, PartialEq, Eq)]
 pub struct BlockHeader {
     version: u8,
+    previous_hash: HashedBlock,
     merkle_root: [u8; 32],
 }
 
 impl BlockHeader {
 
-    pub fn new(version: u8) -> Self {
-        Self {
-            version,
-            merkle_root: [0; 32],
+    pub fn hash(&self) -> HashedBlock {
+        let mut hasher = Sha256::new();
+        hasher.update(&self.version.to_le_bytes());
+        hasher.update(&self.previous_hash[..]);
+        hasher.update(&self.merkle_root[..]);
+
+        hasher.finalize().into()
+    }  
+
+    pub fn new(version: u8, prev_block_header: Option<&BlockHeader>) -> Self {
+        match prev_block_header {
+            Some(b) => Self {
+                version,
+                previous_hash: b.hash(),
+                merkle_root: [0; 32], // unitialized merkle root
+            },
+
+            None => Self {
+                version,
+                previous_hash: [0; 32], // None. Pretty much just useful for testing and the first block of a new network.
+                merkle_root: [0; 32],
+            }
         }
     }
 
@@ -57,29 +101,6 @@ impl BlockHeader {
 
         self.merkle_root = hashes[0];
     }
-}
-
-/// Double hash of a transaction to be used as the id
-type Txid = [u8; 32];
-
-/// Double hash of a public wallet address to signify a recipient.
-/// Important to note that because a wallers value is actually held in
-/// unspent outputs, it does not need to be unhashed. Anyone can calculate
-/// their own wallets value by double hashing their address
-/// and searching for it in the UTXO
-type HashedPublic = [u8; 32];
-
-/// represents an input in a transaction
-/// references a previous transaction, and the index of the specific
-/// output that is trying to be spent
-struct TxInput {
-    txid: Txid,
-    index: u8,
-}
-
-struct TxOutput {
-    recip: HashedPublic,
-    amount: u32,
 }
 
 use p256::ecdsa::{Signature, VerifyingKey};
@@ -219,8 +240,8 @@ mod tests {
             outputs: Vec::new(),
         });
 
-        let mut b1 = BlockHeader::new(1);
-        let mut b2 = BlockHeader::new(1);
+        let mut b1 = BlockHeader::new(1, None);
+        let mut b2 = BlockHeader::new(1, None);
 
         b1.compute_merkle_root(&transactions);
         b2.compute_merkle_root(&transactions2);
