@@ -7,12 +7,21 @@ pub struct Block {
     transactions: Vec<Transaction>,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct BlockHeader {
     version: u8,
     merkle_root: [u8; 32],
 }
 
 impl BlockHeader {
+
+    pub fn new(version: u8) -> Self {
+        Self {
+            version,
+            merkle_root: [0; 32],
+        }
+    }
+
     pub fn compute_merkle_root(&mut self, mut transactions: &[Transaction]) {
 
         let odd = {
@@ -140,5 +149,82 @@ impl Transaction {
 
         let hash: [u8; 32] = hasher.finalize().into();
         hash
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use p256::{ecdsa::Signature, elliptic_curve::rand_core::OsRng, pkcs8::PrivateKeyInfo};
+    use p256::ecdsa::signature::Signer;
+
+    #[test]
+    fn merkle() {
+        let private = p256::ecdsa::SigningKey::random(&mut OsRng);
+        let public = private.verifying_key().to_owned();
+        let message = b"Some bullshit";
+        let signature = private.sign(message);
+
+        let mut transactions = Vec::new();
+        transactions.push(Transaction {
+            txid: [2; 32],
+            signature: signature,
+            verifying_key: public,
+            inputs: vec![TxInput { txid: [5; 32], index: 9 }],
+            outputs: Vec::new(),
+        });
+        transactions.push(Transaction {
+            txid: [6; 32],
+            signature: signature,
+            verifying_key: public,
+            inputs: vec![TxInput { txid: [5; 32], index: 9 }, TxInput { txid: [30; 32], index: 2 }],
+            outputs: Vec::new(),
+        });
+        transactions.push(Transaction {
+            txid: [7; 32],
+            signature: signature,
+            verifying_key: public,
+            inputs: vec![TxInput { txid: [5; 32], index: 9 }, TxInput { txid: [30; 32], index: 2 }],
+            outputs: Vec::new(),
+        });
+
+
+        let mut transactions2 = Vec::new();
+        transactions2.push(Transaction {
+            txid: [2; 32],
+            signature: signature,
+            verifying_key: public,
+            inputs: vec![TxInput { txid: [5; 32], index: 9 }],
+            outputs: Vec::new(),
+        });
+        transactions2.push(Transaction {
+            txid: [6; 32],
+            signature: signature,
+            verifying_key: public,
+            inputs: vec![TxInput { txid: [5; 32], index: 9 }, TxInput { txid: [30; 32], index: 2 }],
+            outputs: Vec::new(),
+        });
+        transactions2.push(Transaction {
+            txid: [7; 32],
+            signature: signature,
+            verifying_key: public,
+            inputs: vec![TxInput { txid: [5; 32], index: 9 }, TxInput { txid: [30; 32], index: 2 }],
+            outputs: Vec::new(),
+        });
+        transactions2.push(Transaction {
+            txid: [7; 32],
+            signature: signature,
+            verifying_key: public,
+            inputs: vec![TxInput { txid: [5; 32], index: 13 }, TxInput { txid: [30; 32], index: 2 }],
+            outputs: Vec::new(),
+        });
+
+        let mut b1 = BlockHeader::new(1);
+        let mut b2 = BlockHeader::new(1);
+
+        b1.compute_merkle_root(&transactions);
+        b2.compute_merkle_root(&transactions2);
+
+        assert_ne!(b1, b2);
     }
 }
