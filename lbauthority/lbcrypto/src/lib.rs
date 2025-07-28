@@ -3,7 +3,12 @@ use sha2::{Sha256, Digest};
 /// The representation of a block within a localblocl
 /// network. Similar to bitcoin's.
 pub struct Block {
+    header: BlockHeader,
+}
 
+pub struct BlockHeader {
+    version: u8,
+    merkle_root: [u8; 32],
 }
 
 /// Double hash of a transaction to be used as the id
