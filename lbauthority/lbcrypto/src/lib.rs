@@ -28,14 +28,33 @@ struct TxOutput {
     recip: HashedPublic,
     amount: u32,
 }
+
+use p256::ecdsa::{Signature, VerifyingKey};
 pub struct Transaction {
     txid: Txid,
+    signature: Signature, // is signature on the inputs and outputs from the sender
+    verifying_key: VerifyingKey,
     inputs: Vec<TxInput>,
-    output: Vec<TxOutput>,
+    outputs: Vec<TxOutput>,
 }
 
+use p256::ecdsa::signature::Verifier;
+impl Transaction {
+    pub fn verify_signature(&self) -> bool {
+        // Get size of buffer needed to match against
+        let byte_count = self.inputs.len() * 33 + self.outputs.len() * 36;
+        let mut bytes: Vec<u8> = Vec::with_capacity(byte_count);
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+        for input in &self.inputs {
+            bytes.extend_from_slice(&input.txid[..]);
+            bytes.extend_from_slice(&input.index.to_le_bytes()[..]);
+        }
+
+        for output in &self.outputs {
+            bytes.extend_from_slice(&output.recip[..]);
+            bytes.extend_from_slice(&output.amount.to_le_bytes()[..]);
+        }
+
+        self.verifying_key.verify(&bytes[..], &self.signature).is_ok()
+    }
 }
