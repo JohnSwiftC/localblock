@@ -4,11 +4,50 @@ use sha2::{Sha256, Digest};
 /// network. Similar to bitcoin's.
 pub struct Block {
     header: BlockHeader,
+    transactions: Vec<Transaction>,
 }
 
 pub struct BlockHeader {
     version: u8,
     merkle_root: [u8; 32],
+}
+
+impl BlockHeader {
+    pub fn compute_merkle_root(&mut self, mut transactions: &[Transaction]) {
+
+        let odd = {
+            if transactions.len() % 2 == 0 {
+                false
+            } else {
+                true
+            }
+        };
+
+        let mut hashes: Vec<[u8; 32]> = Vec::with_capacity(transactions.len());
+        for transaction in transactions {
+            hashes.push(transaction.hash());
+        }
+
+        if odd {
+            hashes.push(transactions[transactions.len() - 1].hash());
+        }
+
+        let mut steps = hashes.len();
+        while steps > 1 {
+            let mut i = 0;
+            for k in 0..steps / 2 {
+                let mut hasher = Sha256::new();
+                hasher.update(hashes[i]);
+                hasher.update(hashes[i + 1]);
+                hashes[k] = hasher.finalize().into();
+                i += 2;
+            }
+
+            steps /= 2;
+        }
+
+        self.merkle_root = hashes[0];
+    }
 }
 
 /// Double hash of a transaction to be used as the id
