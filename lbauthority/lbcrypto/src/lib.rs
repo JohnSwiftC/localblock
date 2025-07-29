@@ -37,6 +37,7 @@ pub struct BlockHeader {
     version: u8,
     previous_hash: HashedBlock,
     merkle_root: [u8; 32],
+    nonce: u32,
 }
 
 impl BlockHeader {
@@ -62,12 +63,14 @@ impl BlockHeader {
                 version,
                 previous_hash: b.hash(),
                 merkle_root: [0; 32], // unitialized merkle root
+                nonce: 0,
             },
 
             None => Self {
                 version,
                 previous_hash: [0; 32], // None. Pretty much just useful for testing and the first block of a new network.
                 merkle_root: [0; 32],
+                nonce: 0,
             }
         }
     }
