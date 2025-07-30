@@ -1,5 +1,6 @@
 use std::hash::Hash;
 
+use sha2::digest::XofReader;
 use sha2::{Sha256, Digest};
 
 /// Double hash of a transaction to be used as the id
@@ -15,6 +16,22 @@ type HashedPublic = [u8; 32];
 #[derive(Debug, PartialEq, Eq)]
 struct HashedBlock {
     bytes: [u8; 32],
+}
+
+impl HashedBlock {
+    pub fn has_zero_bits(&self, n: u8) -> bool {
+        let mut count: u8 = 0;
+
+        for &b in &self.bytes {
+            let zeros: u8 = b.leading_zeros() as u8;
+            count += zeros;
+            if zeros > 8 {
+                break;
+            }
+        }
+        
+        count >= n
+    }
 }
 
 /// represents an input in a transaction
