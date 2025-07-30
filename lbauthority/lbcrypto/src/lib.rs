@@ -72,7 +72,7 @@ impl BlockHeader {
 
         // Second go around ;)
 
-        hasher = Sha256::new();
+        let mut hasher = Sha256::new();
         hasher.update(&inter.bytes[..]);
         
         HashedBlock {
