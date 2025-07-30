@@ -44,7 +44,6 @@ async fn search_for_nonce(mut block_header: BlockHeader, zero_bits: u8) -> Block
         }
 
         attempt += 1;
-        eprintln!("On attempt {}", attempt);
         block_header.increment_nonce();
     }
 }
@@ -59,6 +58,6 @@ mod tests {
         let txs = vec![Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy()];
         block_header.compute_merkle_root(&txs);
 
-        search_for_nonce(block_header, 2).await;
+        search_for_nonce(block_header, 24).await;
     }
 }
