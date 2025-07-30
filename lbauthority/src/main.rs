@@ -61,6 +61,7 @@ mod tests {
         for i in 1..=30 {
             let start = Instant::now();
             block_header = search_for_nonce(block_header, i).await;
+            block_header.set_nonce(0);
             let duration = start.elapsed();
             println!("Difficulty: {} : Time: {:?}", i, duration);
         }

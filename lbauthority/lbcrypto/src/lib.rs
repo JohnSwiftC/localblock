@@ -56,7 +56,7 @@ pub struct BlockHeader {
     version: u8,
     previous_hash: HashedBlock,
     merkle_root: [u8; 32],
-    nonce: u32,
+    nonce: u64,
 }
 
 impl BlockHeader {
@@ -137,6 +137,10 @@ impl BlockHeader {
 
     pub fn increment_nonce(&mut self) {
         self.nonce += 1;
+    }
+
+    pub fn set_nonce(&mut self, nonce: u64) {
+        self.nonce = nonce;
     }
 }
 
