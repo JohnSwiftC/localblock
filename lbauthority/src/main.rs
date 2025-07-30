@@ -34,5 +34,5 @@ struct NodeContext {
 
 /// Given a block head, will search for a nonce that hashes with the required 0 bits.
 async fn search_for_nonce(block_header: BlockHeader) -> BlockHeader {
-    
+    block_header
 }
