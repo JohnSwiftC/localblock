@@ -1,6 +1,3 @@
-use std::hash::Hash;
-
-use sha2::digest::XofReader;
 use sha2::{Sha256, Digest};
 
 /// Double hash of a transaction to be used as the id
@@ -151,7 +148,8 @@ pub struct Transaction {
     outputs: Vec<TxOutput>,
 }
 
-use p256::ecdsa::signature::Verifier;
+use p256::ecdsa::signature::{Verifier, Signer};
+use p256::elliptic_curve::rand_core::OsRng;
 impl Transaction {
     pub fn verify_signature(&self) -> bool {
         // Get size of buffer needed to match against
@@ -209,6 +207,21 @@ impl Transaction {
 
         let hash: [u8; 32] = hasher.finalize().into();
         hash
+    }
+
+    pub fn test_dummy() -> Self {
+        let private = p256::ecdsa::SigningKey::random(&mut OsRng);
+        let public = private.verifying_key().to_owned();
+        let message = b"Some bullshit";
+        let signature = private.sign(message);
+
+        Self {
+            txid: [15; 32],
+            signature,
+            verifying_key: public,
+            inputs: vec![TxInput { txid: [5; 32], index: 9 }, TxInput { txid: [30; 32], index: 2 }],
+            outputs: Vec::new(),
+        }
     }
 }
 

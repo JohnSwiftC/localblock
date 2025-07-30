@@ -43,3 +43,14 @@ async fn search_for_nonce(mut block_header: BlockHeader, zero_bits: u8) -> Block
         block_header.increment_nonce();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn time_proof_of_work() {
+        let block_header = BlockHeader::new(1, None);
+        
+    }
+}
