@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 
 mod database;
 
-use lbcrypto;
+use lbcrypto::{BlockHeader, Block};
 
 #[tokio::main]
 async fn main() {
@@ -32,4 +32,7 @@ struct NodeContext {
     worker: Arc<Mutex<JoinHandle<()>>>,
 }
 
-async fn search_for_nonce() {}
+/// Given a block head, will search for a nonce that hashes with the required 0 bits.
+async fn search_for_nonce(block_header: BlockHeader) -> BlockHeader {
+    
+}

@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use sha2::{Sha256, Digest};
 
 /// Double hash of a transaction to be used as the id
@@ -10,7 +12,10 @@ type Txid = [u8; 32];
 /// and searching for it in the UTXO
 type HashedPublic = [u8; 32];
 
-type HashedBlock = [u8; 32];
+#[derive(Debug, PartialEq, Eq)]
+struct HashedBlock {
+    bytes: [u8; 32],
+}
 
 /// represents an input in a transaction
 /// references a previous transaction, and the index of the specific
@@ -45,16 +50,20 @@ impl BlockHeader {
     pub fn hash(&self) -> HashedBlock {
         let mut hasher = Sha256::new();
         hasher.update(&self.version.to_le_bytes());
-        hasher.update(&self.previous_hash[..]);
+        hasher.update(&self.previous_hash.bytes[..]);
         hasher.update(&self.merkle_root[..]);
 
-        let inter: HashedBlock = hasher.finalize().into();
+        let inter: HashedBlock = HashedBlock { bytes: hasher.finalize().into() };
 
         // Second go around ;)
 
         hasher = Sha256::new();
-        hasher.update(&inter[..]);
-        hasher.finalize().into()
+        hasher.update(&inter.bytes[..]);
+        
+        HashedBlock {
+            bytes: hasher.finalize().into()
+        }
+    
     }  
 
     pub fn new(version: u8, prev_block_header: Option<&BlockHeader>) -> Self {
@@ -68,7 +77,7 @@ impl BlockHeader {
 
             None => Self {
                 version,
-                previous_hash: [0; 32], // None. Pretty much just useful for testing and the first block of a new network.
+                previous_hash: HashedBlock { bytes: [0; 32] }, // None. Pretty much just useful for testing and the first block of a new network.
                 merkle_root: [0; 32],
                 nonce: 0,
             }
