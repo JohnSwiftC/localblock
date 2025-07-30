@@ -12,7 +12,7 @@ type HashedPublic = [u8; 32];
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct HashedBlock {
-    bytes: [u8; 32],
+    pub bytes: [u8; 32],
 }
 
 impl HashedBlock {
@@ -22,7 +22,7 @@ impl HashedBlock {
         for &b in &self.bytes {
             let zeros: u8 = b.leading_zeros() as u8;
             count += zeros;
-            if zeros > 8 {
+            if zeros < 8 || count == n {
                 break;
             }
         }
@@ -66,6 +66,7 @@ impl BlockHeader {
         hasher.update(&self.version.to_le_bytes());
         hasher.update(&self.previous_hash.bytes[..]);
         hasher.update(&self.merkle_root[..]);
+        hasher.update(&self.nonce.to_le_bytes());
 
         let inter: HashedBlock = HashedBlock { bytes: hasher.finalize().into() };
 

@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 
 mod database;
 
-use lbcrypto::{BlockHeader, Block};
+use lbcrypto::{BlockHeader, Block, Transaction};
 
 #[tokio::main]
 async fn main() {
@@ -34,12 +34,17 @@ struct NodeContext {
 
 /// Given a block head, will search for a nonce that hashes with the required 0 bits.
 async fn search_for_nonce(mut block_header: BlockHeader, zero_bits: u8) -> BlockHeader {
+    eprintln!("Running");
+    let mut attempt = 0;
     loop {
         let hash = block_header.hash();
         if hash.has_zero_bits(zero_bits) {
+            println!("{:#?}", hash.bytes);
             return block_header;
         }
 
+        attempt += 1;
+        eprintln!("On attempt {}", attempt);
         block_header.increment_nonce();
     }
 }
@@ -50,7 +55,10 @@ mod tests {
 
     #[tokio::test]
     async fn time_proof_of_work() {
-        let block_header = BlockHeader::new(1, None);
-        
+        let mut block_header = BlockHeader::new(1, None);
+        let txs = vec![Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy()];
+        block_header.compute_merkle_root(&txs);
+
+        search_for_nonce(block_header, 2).await;
     }
 }
