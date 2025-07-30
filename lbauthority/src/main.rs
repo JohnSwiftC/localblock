@@ -33,6 +33,13 @@ struct NodeContext {
 }
 
 /// Given a block head, will search for a nonce that hashes with the required 0 bits.
-async fn search_for_nonce(block_header: BlockHeader) -> BlockHeader {
-    block_header
+async fn search_for_nonce(mut block_header: BlockHeader, zero_bits: u8) -> BlockHeader {
+    loop {
+        let hash = block_header.hash();
+        if hash.has_zero_bits(zero_bits) {
+            return block_header;
+        }
+
+        block_header.increment_nonce();
+    }
 }

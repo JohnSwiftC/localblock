@@ -14,7 +14,7 @@ type Txid = [u8; 32];
 type HashedPublic = [u8; 32];
 
 #[derive(Debug, PartialEq, Eq)]
-struct HashedBlock {
+pub struct HashedBlock {
     bytes: [u8; 32],
 }
 
@@ -101,7 +101,7 @@ impl BlockHeader {
         }
     }
 
-    pub fn compute_merkle_root(&mut self, mut transactions: &[Transaction]) {
+    pub fn compute_merkle_root(&mut self, transactions: &[Transaction]) {
 
         let odd = {
             if transactions.len() % 2 == 0 {
@@ -135,6 +135,10 @@ impl BlockHeader {
         }
 
         self.merkle_root = hashes[0];
+    }
+
+    pub fn increment_nonce(&mut self) {
+        self.nonce += 1;
     }
 }
 
