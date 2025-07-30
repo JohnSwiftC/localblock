@@ -39,7 +39,6 @@ async fn search_for_nonce(mut block_header: BlockHeader, zero_bits: u8) -> Block
     loop {
         let hash = block_header.hash();
         if hash.has_zero_bits(zero_bits) {
-            println!("{:#?}", hash.bytes);
             return block_header;
         }
 
@@ -50,6 +49,8 @@ async fn search_for_nonce(mut block_header: BlockHeader, zero_bits: u8) -> Block
 
 #[cfg(test)]
 mod tests {
+    use tokio::time::Instant;
+
     use super::*;
 
     #[tokio::test]
@@ -58,6 +59,11 @@ mod tests {
         let txs = vec![Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy()];
         block_header.compute_merkle_root(&txs);
 
-        search_for_nonce(block_header, 24).await;
+        for i in 1..=30 {
+            let start = Instant::now();
+            block_header = search_for_nonce(block_header, i).await;
+            let duration = start.elapsed();
+            println!("Difficulty: {} : Time: {:?}", i, duration);
+        }
     }
 }
