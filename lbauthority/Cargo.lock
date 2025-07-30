@@ -253,6 +253,7 @@ dependencies = [
 name = "lbauthority"
 version = "0.1.0"
 dependencies = [
+ "lbcrypto",
  "p256",
  "sqlite",
  "tokio",

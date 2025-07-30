@@ -1,7 +1,11 @@
 use sqlite::Connection;
 use tokio::net::{TcpListener, TcpStream};
+use tokio::task::{JoinHandle};
+use std::sync::{Arc, Mutex};
 
 mod database;
+
+use lbcrypto;
 
 #[tokio::main]
 async fn main() {
@@ -17,8 +21,15 @@ async fn main() {
             }
         };
 
-        tokio::spawn(async move { handle_stream(socket).await });
+        let h = tokio::spawn(async move { handle_stream(socket).await });
     }
 }
 
 async fn handle_stream(socket: TcpStream) {}
+
+/// Holds join hand
+struct NodeContext {
+    worker: Arc<Mutex<JoinHandle<()>>>,
+}
+
+async fn search_for_nonce() {}
