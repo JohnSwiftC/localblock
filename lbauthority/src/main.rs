@@ -37,12 +37,6 @@ async fn start_block_hashing(mut block: Block) -> JoinHandle<Block> {
     })
 }
 
-/// Holds join hand
-struct NodeContext {
-    worker: Arc<Mutex<JoinHandle<()>>>,
-}
-
-
 #[cfg(test)]
 mod tests {
     use tokio::time::Instant;
