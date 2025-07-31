@@ -94,6 +94,7 @@ pub struct BlockHeader {
     nonce: u64,
 }
 
+// WARNING: BEFORE CHANGING ANYTHING HERE, THINK ABOUT WHAT THIS MIGHT DO TO THE SIZE. I NEED TO WRITE TESTS TO ENFORCE THIS
 impl BlockHeader {
     pub async fn hash(&self) -> HashedBlock {
         let mut hasher = Sha256::new();
@@ -113,12 +114,12 @@ impl BlockHeader {
         }
     }
 
-    pub fn bytes(&self) -> Vec<u8> {
-        let mut bytes: Vec<u8> = Vec::with_capacity(BlockHeader::raw_size());
-        bytes.extend_from_slice(&self.version.to_le_bytes());
-        bytes.extend_from_slice(&self.previous_hash.bytes[..]);
-        bytes.extend_from_slice(&self.merkle_root[..]);
-        bytes.extend_from_slice(&self.nonce.to_le_bytes());
+    pub fn bytes(&self) -> [u8; 73] {
+        let mut bytes = [0; 73];
+        bytes[0..1].copy_from_slice(&self.version.to_le_bytes());
+        bytes[1..33].copy_from_slice(&self.previous_hash.bytes());
+        bytes[33..65].copy_from_slice(&self.merkle_root);
+        bytes[65..73].copy_from_slice(&self.nonce.to_le_bytes());
 
         bytes
     }
