@@ -29,6 +29,23 @@ impl HashedBlock {
         
         count >= n
     }
+
+    pub fn raw_size() -> usize { 32 }
+
+    pub fn from_bytes(bytes: &[u8]) -> Result<HashedBlock, SerialError> {
+        let fixed_b: [u8; 32] = bytes.try_into().map_err(|e| {
+            SerialError::IncorrectSize { expected: HashedBlock::raw_size(), provided: bytes.len() }
+        })?;
+
+        Ok (
+            HashedBlock { bytes: fixed_b }
+        )
+    }
+
+    /// Panics if not given the appropritate amount of bytes
+    pub fn from_bytes_unchecked(bytes: &[u8]) -> HashedBlock {
+        HashedBlock { bytes: bytes.try_into().unwrap() }
+    }
 }
 
 /// represents an input in a transaction
@@ -52,6 +69,7 @@ pub struct Block {
 }
 
 impl Block {
+    
     /// Requires a mut reference becuase it will increment the nonce until a valid hash is found.
     pub async fn search_for_nonce(&mut self, n: u8) {
 
@@ -76,6 +94,8 @@ pub struct BlockHeader {
     nonce: u64,
 }
 
+use std::hash::Hash;
+use std::io::Read;
 use std::ops::Deref;
 impl BlockHeader {
 
@@ -99,16 +119,37 @@ impl BlockHeader {
     
     }
 
-    /// TODO: No internet, but there is a def a trait im forgetting to be using here instead of this function
+    fn raw_size() -> usize { 73 }
+
     pub fn to_bytes(&self) -> Vec<u8> {
-        let mut bytes: Vec<u8> = Vec::with_capacity(1 + 32 + 32 + 8);
+        let mut bytes: Vec<u8> = Vec::with_capacity(BlockHeader::raw_size());
         bytes.extend_from_slice(&self.version.to_le_bytes());
         bytes.extend_from_slice(&self.previous_hash.bytes[..]);
         bytes.extend_from_slice(&self.merkle_root[..]);
         bytes.extend_from_slice(&self.nonce.to_le_bytes());
 
         bytes
-    }  
+    }
+
+    /// Need some internet for this
+    pub fn from_bytes(bytes: &[u8]) -> Result<BlockHeader, SerialError>  {
+        if bytes.len() != BlockHeader::raw_size() {
+            return Err(
+                SerialError::IncorrectSize { expected: BlockHeader::raw_size(), provided: bytes.len() }
+            );
+        }
+
+        // Unwrapping because we know from the previous check that we will be able to create every type. This does not check to see if that
+        // type really makes sense, but thats a problem for a later day
+        let version: u8 = u8::from_le_bytes([bytes[0]]);
+        let previous_hash: HashedBlock = HashedBlock::from_bytes_unchecked(&bytes[1..33]);
+        let merkle_root: [u8; 32] = bytes[33..65].try_into().unwrap();
+        let nonce: u64 = u64::from_le_bytes(bytes[65..73].try_into().unwrap());
+
+        Ok(
+            BlockHeader { version, previous_hash, merkle_root, nonce }
+        )
+    }
 
     pub async fn new(version: u8, prev_block_header: Option<&BlockHeader>) -> Self {
         match prev_block_header {
@@ -185,6 +226,21 @@ pub struct Transaction {
 use p256::ecdsa::signature::{Verifier, Signer};
 use p256::elliptic_curve::rand_core::OsRng;
 impl Transaction {
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+
+        bytes.extend_from_slice(&self.txid);
+        bytes.extend_from_slice(&self.signature.to_bytes());
+        bytes.extend_from_slice(&self.verifying_key.to_sec1_bytes());
+        
+        for input in &self.inputs {
+            bytes.extend_from_slice(&input.txid);
+        }
+
+        bytes
+    }
+
     pub async fn verify_signature(&self) -> bool {
         // Get size of buffer needed to match against
         let byte_count = self.inputs.len() * 33 + self.outputs.len() * 36;
@@ -258,6 +314,22 @@ impl Transaction {
         }
     }
 }
+
+#[derive(Debug)]
+enum SerialError {
+    IncorrectSize { expected: usize, provided: usize },
+}
+
+impl std::fmt::Display for SerialError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            SerialError::IncorrectSize { expected, provided} => {
+                write!(f, "Expected {} bytes, got {}", expected, provided)
+            }
+        }
+    }
+}
+impl std::error::Error for SerialError {}
 
 #[cfg(test)]
 mod tests {
