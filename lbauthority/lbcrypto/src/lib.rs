@@ -76,6 +76,7 @@ pub struct BlockHeader {
     nonce: u64,
 }
 
+use std::ops::Deref;
 impl BlockHeader {
 
     pub async fn hash(&self) -> HashedBlock {
@@ -96,6 +97,17 @@ impl BlockHeader {
             bytes: hasher.finalize().into()
         }
     
+    }
+
+    /// TODO: No internet, but there is a def a trait im forgetting to be using here instead of this function
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes: Vec<u8> = Vec::with_capacity(1 + 32 + 32 + 8);
+        bytes.extend_from_slice(&self.version.to_le_bytes());
+        bytes.extend_from_slice(&self.previous_hash.bytes[..]);
+        bytes.extend_from_slice(&self.merkle_root[..]);
+        bytes.extend_from_slice(&self.nonce.to_le_bytes());
+
+        bytes
     }  
 
     pub async fn new(version: u8, prev_block_header: Option<&BlockHeader>) -> Self {
