@@ -85,7 +85,6 @@ impl HashedBlock {
     }
 }
 
-
 #[derive(Debug, PartialEq, Eq)]
 pub struct BlockHeader {
     version: u8,
