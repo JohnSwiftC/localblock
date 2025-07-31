@@ -1,4 +1,3 @@
-use sqlite::Connection;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::task::{JoinHandle};
 use std::sync::{Arc, Mutex};
@@ -30,9 +29,9 @@ async fn main() {
 
 async fn handle_stream(socket: TcpStream) {}
 
-async fn start_block_hashing(block: Block) -> JoinHandle<()> {
-    tokio::task::spawn(async {
-        let block_header = search_for_nonce(block, 27);
+async fn start_block_hashing(mut block: Block) -> JoinHandle<()> {
+    tokio::task::spawn(async move {
+        block.search_for_nonce(27).await;
         // At this point we would broadcast this block
     })
 }
@@ -42,19 +41,6 @@ struct NodeContext {
     worker: Arc<Mutex<JoinHandle<()>>>,
 }
 
-/// Given a block head, will search for a nonce that hashes with the required 0 bits.
-async fn search_for_nonce(mut block: Block, zero_bits: u8) -> Block {
-    let mut attempt = 0;
-    loop {
-        let hash = block.header.hash();
-        if hash.has_zero_bits(zero_bits) {
-            return block;
-        }
-
-        attempt += 1;
-        block.header.increment_nonce();
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -75,7 +61,7 @@ mod tests {
 
         for i in 1..=40 {
             let start = Instant::now();
-            block = search_for_nonce(block, i).await;
+            block.search_for_nonce(i).await;
             block.header.set_nonce(0);
             let duration = start.elapsed();
             println!("Difficulty: {} : Time: {:?}", i, duration);

@@ -52,13 +52,13 @@ pub struct Block {
 }
 
 impl Block {
-    pub async fn search_for_nonce(&mut self, n: u8) -> Result<(), ()> {
+    pub async fn search_for_nonce(&mut self, n: u8) {
 
         let mut attempt = 0;
         loop {
             let hash = self.header.hash();
             if hash.has_zero_bits(n) {
-                return Ok(());
+                return;
             }
 
             attempt += 1;
