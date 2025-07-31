@@ -97,10 +97,7 @@ pub struct BlockHeader {
 impl BlockHeader {
     pub async fn hash(&self) -> HashedBlock {
         let mut hasher = Sha256::new();
-        hasher.update(&self.version.to_le_bytes());
-        hasher.update(&self.previous_hash.bytes[..]);
-        hasher.update(&self.merkle_root[..]);
-        hasher.update(&self.nonce.to_le_bytes());
+        hasher.update(self.bytes());
 
         let inter: HashedBlock = HashedBlock {
             bytes: hasher.finalize().into(),
@@ -114,10 +111,6 @@ impl BlockHeader {
         HashedBlock {
             bytes: hasher.finalize().into(),
         }
-    }
-
-    fn raw_size() -> usize {
-        73
     }
 
     pub fn bytes(&self) -> Vec<u8> {
@@ -213,6 +206,10 @@ impl BlockHeader {
 
     pub fn set_nonce(&mut self, nonce: u64) {
         self.nonce = nonce;
+    }
+
+    fn raw_size() -> usize {
+        73
     }
 }
 

@@ -8,7 +8,7 @@
     - HashedBlock X
         - bytes() X
         - from_bytes() X
-        - rewrote hashing UNFINISHED
+        - rewrote hashing X
     - Block UNFINISHED
         - bytes() UNFINISHED
         - from_bytes() UNFINISHED
