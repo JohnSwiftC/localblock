@@ -29,10 +29,11 @@ async fn main() {
 
 async fn handle_stream(socket: TcpStream) {}
 
-async fn start_block_hashing(mut block: Block) -> JoinHandle<()> {
+async fn start_block_hashing(mut block: Block) -> JoinHandle<Block> {
     tokio::task::spawn(async move {
         block.search_for_nonce(27).await;
         // At this point we would broadcast this block
+        block
     })
 }
 
