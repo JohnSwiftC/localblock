@@ -226,7 +226,7 @@ pub struct Transaction {
 use p256::ecdsa::signature::{Signer, Verifier};
 use p256::elliptic_curve::rand_core::OsRng;
 impl Transaction {
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
 
         bytes.extend_from_slice(&self.txid);

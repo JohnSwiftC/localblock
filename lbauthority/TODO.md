@@ -8,15 +8,15 @@
     - HashedBlock X
         - bytes() X
         - from_bytes() X
-        - rewrote hashing X
+        - rewrote hashing N/A
     - Block UNFINISHED
         - bytes() UNFINISHED
         - from_bytes() UNFINISHED
         - rewrote hashing UNFINISHED
     - BlockHeader X
-        - bytes() UNFINISHED
-        - from_bytes() UNFINISHED
-        - rewrote hashing UNFINISHED
+        - bytes() X
+        - from_bytes() X
+        - rewrote hashing X
     - Transaction UNFINISHED
         - bytes() UNFINISHED
         - from_bytes() UNFINISHED
