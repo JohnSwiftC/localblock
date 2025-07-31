@@ -1,4 +1,4 @@
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
 
 /// Double hash of a transaction to be used as the id
 type Txid = [u8; 32];
@@ -9,10 +9,40 @@ type Txid = [u8; 32];
 /// their own wallets value by double hashing their address
 /// and searching for it in the UTXO
 type HashedPublic = [u8; 32];
+/// represents an input in a transaction
+/// references a previous transaction, and the index of the specific
+/// output that is trying to be spent
+struct TxInput {
+    txid: Txid,
+    index: u8,
+}
+struct TxOutput {
+    recip: HashedPublic,
+    amount: u32,
+}
+/// The representation of a block within a localblocl
+/// network. Similar to bitcoin's.
+pub struct Block {
+    pub header: BlockHeader,
+    pub transactions: Vec<Transaction>,
+}
+impl Block {
+    /// Requires a mut reference becuase it will increment the nonce until a valid hash is found.
+    pub async fn search_for_nonce(&mut self, n: u8) {
+        loop {
+            let hash = self.header.hash().await;
+            if hash.has_zero_bits(n).await {
+                return;
+            }
+
+            self.header.increment_nonce();
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct HashedBlock {
-    pub bytes: [u8; 32],
+    bytes: [u8; 32],
 }
 
 impl HashedBlock {
@@ -26,69 +56,35 @@ impl HashedBlock {
                 break;
             }
         }
-        
+
         count >= n
     }
 
-    pub fn raw_size() -> usize { 32 }
-
     pub fn from_bytes(bytes: &[u8]) -> Result<HashedBlock, SerialError> {
-        let fixed_b: [u8; 32] = bytes.try_into().map_err(|e| {
-            SerialError::IncorrectSize { expected: HashedBlock::raw_size(), provided: bytes.len() }
+        let fixed_b: [u8; 32] = bytes.try_into().map_err(|_| SerialError::IncorrectSize {
+            expected: HashedBlock::raw_size(),
+            provided: bytes.len(),
         })?;
 
-        Ok (
-            HashedBlock { bytes: fixed_b }
-        )
+        Ok(HashedBlock { bytes: fixed_b })
     }
 
     /// Panics if not given the appropritate amount of bytes
     pub fn from_bytes_unchecked(bytes: &[u8]) -> HashedBlock {
-        HashedBlock { bytes: bytes.try_into().unwrap() }
+        HashedBlock {
+            bytes: bytes.try_into().unwrap(),
+        }
     }
 
     pub fn bytes(&self) -> [u8; 32] {
         self.bytes
     }
-}
 
-/// represents an input in a transaction
-/// references a previous transaction, and the index of the specific
-/// output that is trying to be spent
-struct TxInput {
-    txid: Txid,
-    index: u8,
-}
-
-struct TxOutput {
-    recip: HashedPublic,
-    amount: u32,
-}
-
-/// The representation of a block within a localblocl
-/// network. Similar to bitcoin's.
-pub struct Block {
-    pub header: BlockHeader,
-    pub transactions: Vec<Transaction>,
-}
-
-impl Block {
-    
-    /// Requires a mut reference becuase it will increment the nonce until a valid hash is found.
-    pub async fn search_for_nonce(&mut self, n: u8) {
-
-        let mut attempt = 0;
-        loop {
-            let hash = self.header.hash().await;
-            if hash.has_zero_bits(n).await {
-                return;
-            }
-
-            attempt += 1;
-            self.header.increment_nonce();
-        }
+    fn raw_size() -> usize {
+        32
     }
 }
+
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct BlockHeader {
@@ -98,11 +94,7 @@ pub struct BlockHeader {
     nonce: u64,
 }
 
-use std::hash::Hash;
-use std::io::Read;
-use std::ops::Deref;
 impl BlockHeader {
-
     pub async fn hash(&self) -> HashedBlock {
         let mut hasher = Sha256::new();
         hasher.update(&self.version.to_le_bytes());
@@ -110,20 +102,23 @@ impl BlockHeader {
         hasher.update(&self.merkle_root[..]);
         hasher.update(&self.nonce.to_le_bytes());
 
-        let inter: HashedBlock = HashedBlock { bytes: hasher.finalize().into() };
+        let inter: HashedBlock = HashedBlock {
+            bytes: hasher.finalize().into(),
+        };
 
         // Second go around ;)
 
         let mut hasher = Sha256::new();
         hasher.update(&inter.bytes[..]);
-        
+
         HashedBlock {
-            bytes: hasher.finalize().into()
+            bytes: hasher.finalize().into(),
         }
-    
     }
 
-    fn raw_size() -> usize { 73 }
+    fn raw_size() -> usize {
+        73
+    }
 
     pub fn bytes(&self) -> Vec<u8> {
         let mut bytes: Vec<u8> = Vec::with_capacity(BlockHeader::raw_size());
@@ -136,11 +131,12 @@ impl BlockHeader {
     }
 
     /// Need some internet for this
-    pub fn from_bytes(bytes: &[u8]) -> Result<BlockHeader, SerialError>  {
+    pub fn from_bytes(bytes: &[u8]) -> Result<BlockHeader, SerialError> {
         if bytes.len() != BlockHeader::raw_size() {
-            return Err(
-                SerialError::IncorrectSize { expected: BlockHeader::raw_size(), provided: bytes.len() }
-            );
+            return Err(SerialError::IncorrectSize {
+                expected: BlockHeader::raw_size(),
+                provided: bytes.len(),
+            });
         }
 
         // Unwrapping because we know from the previous check that we will be able to create every type. This does not check to see if that
@@ -150,9 +146,12 @@ impl BlockHeader {
         let merkle_root: [u8; 32] = bytes[33..65].try_into().unwrap();
         let nonce: u64 = u64::from_le_bytes(bytes[65..73].try_into().unwrap());
 
-        Ok(
-            BlockHeader { version, previous_hash, merkle_root, nonce }
-        )
+        Ok(BlockHeader {
+            version,
+            previous_hash,
+            merkle_root,
+            nonce,
+        })
     }
 
     pub async fn new(version: u8, prev_block_header: Option<&BlockHeader>) -> Self {
@@ -169,12 +168,11 @@ impl BlockHeader {
                 previous_hash: HashedBlock { bytes: [0; 32] }, // None. Pretty much just useful for testing and the first block of a new network.
                 merkle_root: [0; 32],
                 nonce: 0,
-            }
+            },
         }
     }
 
     pub async fn compute_merkle_root(&mut self, transactions: &[Transaction]) {
-
         let odd = {
             if transactions.len() % 2 == 0 {
                 false
@@ -227,17 +225,16 @@ pub struct Transaction {
     outputs: Vec<TxOutput>,
 }
 
-use p256::ecdsa::signature::{Verifier, Signer};
+use p256::ecdsa::signature::{Signer, Verifier};
 use p256::elliptic_curve::rand_core::OsRng;
 impl Transaction {
-
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
 
         bytes.extend_from_slice(&self.txid);
         bytes.extend_from_slice(&self.signature.to_bytes());
         bytes.extend_from_slice(&self.verifying_key.to_sec1_bytes());
-        
+
         for input in &self.inputs {
             bytes.extend_from_slice(&input.txid);
         }
@@ -260,7 +257,9 @@ impl Transaction {
             bytes.extend_from_slice(&output.amount.to_le_bytes()[..]);
         }
 
-        self.verifying_key.verify(&bytes[..], &self.signature).is_ok()
+        self.verifying_key
+            .verify(&bytes[..], &self.signature)
+            .is_ok()
     }
 
     pub async fn verify_txid(&self) -> bool {
@@ -288,7 +287,6 @@ impl Transaction {
         hasher.update(&self.signature.to_bytes()[..]);
         hasher.update(&self.verifying_key.to_sec1_bytes()[..]);
 
-
         for input in &self.inputs {
             hasher.update(&input.txid[..]);
             hasher.update(&input.index.to_le_bytes());
@@ -313,21 +311,30 @@ impl Transaction {
             txid: [15; 32],
             signature,
             verifying_key: public,
-            inputs: vec![TxInput { txid: [5; 32], index: 9 }, TxInput { txid: [30; 32], index: 2 }],
+            inputs: vec![
+                TxInput {
+                    txid: [5; 32],
+                    index: 9,
+                },
+                TxInput {
+                    txid: [30; 32],
+                    index: 2,
+                },
+            ],
             outputs: Vec::new(),
         }
     }
 }
 
 #[derive(Debug)]
-enum SerialError {
+pub enum SerialError {
     IncorrectSize { expected: usize, provided: usize },
 }
 
 impl std::fmt::Display for SerialError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            SerialError::IncorrectSize { expected, provided} => {
+            SerialError::IncorrectSize { expected, provided } => {
                 write!(f, "Expected {} bytes, got {}", expected, provided)
             }
         }
@@ -338,8 +345,8 @@ impl std::error::Error for SerialError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use p256::{ecdsa::Signature, elliptic_curve::rand_core::OsRng, pkcs8::PrivateKeyInfo};
     use p256::ecdsa::signature::Signer;
+    use p256::{ecdsa::Signature, elliptic_curve::rand_core::OsRng, pkcs8::PrivateKeyInfo};
 
     #[test]
     fn merkle() {
@@ -353,52 +360,102 @@ mod tests {
             txid: [2; 32],
             signature: signature,
             verifying_key: public,
-            inputs: vec![TxInput { txid: [5; 32], index: 9 }],
+            inputs: vec![TxInput {
+                txid: [5; 32],
+                index: 9,
+            }],
             outputs: Vec::new(),
         });
         transactions.push(Transaction {
             txid: [6; 32],
             signature: signature,
             verifying_key: public,
-            inputs: vec![TxInput { txid: [5; 32], index: 9 }, TxInput { txid: [30; 32], index: 2 }],
+            inputs: vec![
+                TxInput {
+                    txid: [5; 32],
+                    index: 9,
+                },
+                TxInput {
+                    txid: [30; 32],
+                    index: 2,
+                },
+            ],
             outputs: Vec::new(),
         });
         transactions.push(Transaction {
             txid: [7; 32],
             signature: signature,
             verifying_key: public,
-            inputs: vec![TxInput { txid: [5; 32], index: 9 }, TxInput { txid: [30; 32], index: 2 }],
+            inputs: vec![
+                TxInput {
+                    txid: [5; 32],
+                    index: 9,
+                },
+                TxInput {
+                    txid: [30; 32],
+                    index: 2,
+                },
+            ],
             outputs: Vec::new(),
         });
-
 
         let mut transactions2 = Vec::new();
         transactions2.push(Transaction {
             txid: [2; 32],
             signature: signature,
             verifying_key: public,
-            inputs: vec![TxInput { txid: [5; 32], index: 9 }],
+            inputs: vec![TxInput {
+                txid: [5; 32],
+                index: 9,
+            }],
             outputs: Vec::new(),
         });
         transactions2.push(Transaction {
             txid: [6; 32],
             signature: signature,
             verifying_key: public,
-            inputs: vec![TxInput { txid: [5; 32], index: 9 }, TxInput { txid: [30; 32], index: 2 }],
+            inputs: vec![
+                TxInput {
+                    txid: [5; 32],
+                    index: 9,
+                },
+                TxInput {
+                    txid: [30; 32],
+                    index: 2,
+                },
+            ],
             outputs: Vec::new(),
         });
         transactions2.push(Transaction {
             txid: [7; 32],
             signature: signature,
             verifying_key: public,
-            inputs: vec![TxInput { txid: [5; 32], index: 9 }, TxInput { txid: [30; 32], index: 2 }],
+            inputs: vec![
+                TxInput {
+                    txid: [5; 32],
+                    index: 9,
+                },
+                TxInput {
+                    txid: [30; 32],
+                    index: 2,
+                },
+            ],
             outputs: Vec::new(),
         });
         transactions2.push(Transaction {
             txid: [7; 32],
             signature: signature,
             verifying_key: public,
-            inputs: vec![TxInput { txid: [5; 32], index: 13 }, TxInput { txid: [30; 32], index: 2 }],
+            inputs: vec![
+                TxInput {
+                    txid: [5; 32],
+                    index: 13,
+                },
+                TxInput {
+                    txid: [30; 32],
+                    index: 2,
+                },
+            ],
             outputs: Vec::new(),
         });
 

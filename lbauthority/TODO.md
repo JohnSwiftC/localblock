@@ -8,15 +8,19 @@
     - HashedBlock X
         - bytes() X
         - from_bytes() X
+        - rewrote hashing UNFINISHED
     - Block UNFINISHED
         - bytes() UNFINISHED
         - from_bytes() UNFINISHED
+        - rewrote hashing UNFINISHED
     - BlockHeader X
         - bytes() UNFINISHED
         - from_bytes() UNFINISHED
+        - rewrote hashing UNFINISHED
     - Transaction UNFINISHED
         - bytes() UNFINISHED
         - from_bytes() UNFINISHED
+        - rewrote hashing UNFINISHED
 
 - General improvements
     - Organization of structs and functions is annoying currently
