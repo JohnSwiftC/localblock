@@ -52,6 +52,7 @@ pub struct Block {
 }
 
 impl Block {
+    /// Requires a mut reference becuase it will increment the nonce until a valid hash is found.
     pub async fn search_for_nonce(&mut self, n: u8) {
 
         let mut attempt = 0;
