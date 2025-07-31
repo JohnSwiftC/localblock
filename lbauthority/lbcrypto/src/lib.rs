@@ -16,7 +16,7 @@ pub struct HashedBlock {
 }
 
 impl HashedBlock {
-    pub fn has_zero_bits(&self, n: u8) -> bool {
+    pub async fn has_zero_bits(&self, n: u8) -> bool {
         let mut count: u8 = 0;
 
         for &b in &self.bytes {
@@ -57,8 +57,8 @@ impl Block {
 
         let mut attempt = 0;
         loop {
-            let hash = self.header.hash();
-            if hash.has_zero_bits(n) {
+            let hash = self.header.hash().await;
+            if hash.has_zero_bits(n).await {
                 return;
             }
 
@@ -78,7 +78,7 @@ pub struct BlockHeader {
 
 impl BlockHeader {
 
-    pub fn hash(&self) -> HashedBlock {
+    pub async fn hash(&self) -> HashedBlock {
         let mut hasher = Sha256::new();
         hasher.update(&self.version.to_le_bytes());
         hasher.update(&self.previous_hash.bytes[..]);
@@ -98,11 +98,11 @@ impl BlockHeader {
     
     }  
 
-    pub fn new(version: u8, prev_block_header: Option<&BlockHeader>) -> Self {
+    pub async fn new(version: u8, prev_block_header: Option<&BlockHeader>) -> Self {
         match prev_block_header {
             Some(b) => Self {
                 version,
-                previous_hash: b.hash(),
+                previous_hash: b.hash().await,
                 merkle_root: [0; 32], // unitialized merkle root
                 nonce: 0,
             },
@@ -116,7 +116,7 @@ impl BlockHeader {
         }
     }
 
-    pub fn compute_merkle_root(&mut self, transactions: &[Transaction]) {
+    pub async fn compute_merkle_root(&mut self, transactions: &[Transaction]) {
 
         let odd = {
             if transactions.len() % 2 == 0 {
@@ -128,11 +128,11 @@ impl BlockHeader {
 
         let mut hashes: Vec<[u8; 32]> = Vec::with_capacity(transactions.len());
         for transaction in transactions {
-            hashes.push(transaction.hash());
+            hashes.push(transaction.hash().await);
         }
 
         if odd {
-            hashes.push(transactions[transactions.len() - 1].hash());
+            hashes.push(transactions[transactions.len() - 1].hash().await);
         }
 
         let mut steps = hashes.len();
@@ -173,7 +173,7 @@ pub struct Transaction {
 use p256::ecdsa::signature::{Verifier, Signer};
 use p256::elliptic_curve::rand_core::OsRng;
 impl Transaction {
-    pub fn verify_signature(&self) -> bool {
+    pub async fn verify_signature(&self) -> bool {
         // Get size of buffer needed to match against
         let byte_count = self.inputs.len() * 33 + self.outputs.len() * 36;
         let mut bytes: Vec<u8> = Vec::with_capacity(byte_count);
@@ -191,7 +191,7 @@ impl Transaction {
         self.verifying_key.verify(&bytes[..], &self.signature).is_ok()
     }
 
-    pub fn verify_txid(&self) -> bool {
+    pub async fn verify_txid(&self) -> bool {
         let mut hasher = Sha256::new();
         hasher.update(self.signature.to_bytes());
         hasher.update(self.verifying_key.to_sec1_bytes());
@@ -210,7 +210,7 @@ impl Transaction {
         &hash[..] == &self.txid[..]
     }
 
-    pub fn hash(&self) -> [u8; 32] {
+    pub async fn hash(&self) -> [u8; 32] {
         let mut hasher = Sha256::new();
         hasher.update(&self.txid);
         hasher.update(&self.signature.to_bytes()[..]);

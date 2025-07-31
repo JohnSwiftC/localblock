@@ -1,6 +1,5 @@
 use tokio::net::{TcpListener, TcpStream};
 use tokio::task::{JoinHandle};
-use std::sync::{Arc, Mutex};
 
 mod database;
 
@@ -45,9 +44,9 @@ mod tests {
 
     #[tokio::test]
     async fn time_proof_of_work() {
-        let mut block_header = BlockHeader::new(1, None);
+        let mut block_header = BlockHeader::new(1, None).await;
         let txs = vec![Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy()];
-        block_header.compute_merkle_root(&txs);
+        block_header.compute_merkle_root(&txs).await;
 
         let mut block = Block {
             header: block_header,
