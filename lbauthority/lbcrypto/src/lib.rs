@@ -46,6 +46,10 @@ impl HashedBlock {
     pub fn from_bytes_unchecked(bytes: &[u8]) -> HashedBlock {
         HashedBlock { bytes: bytes.try_into().unwrap() }
     }
+
+    pub fn bytes(&self) -> [u8; 32] {
+        self.bytes
+    }
 }
 
 /// represents an input in a transaction
@@ -121,7 +125,7 @@ impl BlockHeader {
 
     fn raw_size() -> usize { 73 }
 
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn bytes(&self) -> Vec<u8> {
         let mut bytes: Vec<u8> = Vec::with_capacity(BlockHeader::raw_size());
         bytes.extend_from_slice(&self.version.to_le_bytes());
         bytes.extend_from_slice(&self.previous_hash.bytes[..]);
