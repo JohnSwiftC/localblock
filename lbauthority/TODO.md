@@ -20,7 +20,7 @@
     - Transaction UNFINISHED
         - bytes() X
         - from_bytes() UNFINISHED
-        - rewrote hashing UNFINISHED
+        - rewrote hashing N/A doing so might cause a slowdown, lets just use bytes for serialization. Also outputs a vec because of an unknown size at compile time. Block will have to do the same
 
 - General improvements
     - Organization of structs and functions is annoying currently
