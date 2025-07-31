@@ -18,7 +18,7 @@
         - from_bytes() X
         - rewrote hashing X
     - Transaction UNFINISHED
-        - bytes() X
+        - bytex() N/A is now serialize(), is done
         - from_bytes() UNFINISHED
         - rewrote hashing N/A doing so might cause a slowdown, lets just use bytes for serialization. Also outputs a vec because of an unknown size at compile time. Block will have to do the same
 

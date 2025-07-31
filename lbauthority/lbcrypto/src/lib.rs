@@ -225,17 +225,23 @@ pub struct Transaction {
 use p256::ecdsa::signature::{Signer, Verifier};
 use p256::elliptic_curve::rand_core::OsRng;
 impl Transaction {
-    pub fn bytes(&self) -> Vec<u8> {
+    pub fn serialize(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
 
         bytes.extend_from_slice(&self.txid);
         bytes.extend_from_slice(&self.signature.to_bytes());
         bytes.extend_from_slice(&self.verifying_key.to_sec1_bytes());
 
+        // One byte to signify amount of inputs, le ofc
+        bytes.extend_from_slice(&(self.inputs.len() as u8).to_le_bytes());
+
         for input in &self.inputs {
             bytes.extend_from_slice(&input.txid);
             bytes.extend_from_slice(&input.index.to_le_bytes());
         }
+
+        // Same for outputs
+        bytes.extend_from_slice(&(self.outputs.len() as u8).to_le_bytes());
 
         for output in &self.outputs {
             bytes.extend_from_slice(&output.recip);
@@ -243,6 +249,17 @@ impl Transaction {
         }
 
         bytes
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> Result<Transaction, SerialError> {
+        // uh not exactly sure how i want to do this yet, might have to do some math for it
+        // but then how to do it? might make bytes here called serialize to indicate that im adding extra data to allow for it
+        // to be parsed back
+
+        // placeholder
+        Err(
+            SerialError::IncorrectSize { expected: 1, provided: 1 }
+        )
     }
 
     pub async fn verify_signature(&self) -> bool {
