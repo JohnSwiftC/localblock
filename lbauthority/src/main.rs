@@ -11,6 +11,9 @@ use lbcrypto::{BlockHeader, Block, Transaction};
 async fn main() {
     let listener = TcpListener::bind("0.0.0.0:2727").await.unwrap();
     let connection = database::init_db_conn("auth.db").unwrap();
+    let search_task = tokio::task::spawn(async {
+
+    });
 
     loop {
         let socket = match listener.accept().await {
@@ -27,22 +30,29 @@ async fn main() {
 
 async fn handle_stream(socket: TcpStream) {}
 
+async fn start_block_hashing(block: Block) -> JoinHandle<()> {
+    tokio::task::spawn(async {
+        let block_header = search_for_nonce(block, 27);
+        // At this point we would broadcast this block
+    })
+}
+
 /// Holds join hand
 struct NodeContext {
     worker: Arc<Mutex<JoinHandle<()>>>,
 }
 
 /// Given a block head, will search for a nonce that hashes with the required 0 bits.
-async fn search_for_nonce(mut block_header: BlockHeader, zero_bits: u8) -> BlockHeader {
+async fn search_for_nonce(mut block: Block, zero_bits: u8) -> Block {
     let mut attempt = 0;
     loop {
-        let hash = block_header.hash();
+        let hash = block.header.hash();
         if hash.has_zero_bits(zero_bits) {
-            return block_header;
+            return block;
         }
 
         attempt += 1;
-        block_header.increment_nonce();
+        block.header.increment_nonce();
     }
 }
 
@@ -55,13 +65,18 @@ mod tests {
     #[tokio::test]
     async fn time_proof_of_work() {
         let mut block_header = BlockHeader::new(1, None);
-        let txs = vec![Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy()];
+        let txs = vec![Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy()];
         block_header.compute_merkle_root(&txs);
 
-        for i in 1..=30 {
+        let mut block = Block {
+            header: block_header,
+            transactions: txs,
+        };
+
+        for i in 1..=40 {
             let start = Instant::now();
-            block_header = search_for_nonce(block_header, i).await;
-            block_header.set_nonce(0);
+            block = search_for_nonce(block, i).await;
+            block.header.set_nonce(0);
             let duration = start.elapsed();
             println!("Difficulty: {} : Time: {:?}", i, duration);
         }

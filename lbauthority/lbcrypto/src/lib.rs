@@ -47,8 +47,24 @@ struct TxOutput {
 /// The representation of a block within a localblocl
 /// network. Similar to bitcoin's.
 pub struct Block {
-    header: BlockHeader,
-    transactions: Vec<Transaction>,
+    pub header: BlockHeader,
+    pub transactions: Vec<Transaction>,
+}
+
+impl Block {
+    pub async fn search_for_nonce(&mut self, n: u8) -> Result<(), ()> {
+
+        let mut attempt = 0;
+        loop {
+            let hash = self.header.hash();
+            if hash.has_zero_bits(n) {
+                return Ok(());
+            }
+
+            attempt += 1;
+            self.header.increment_nonce();
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
