@@ -42,7 +42,7 @@ mod tests {
 
     #[tokio::test]
     async fn time_proof_of_work() {
-        let mut block_header = BlockHeader::new(1, None).await;
+        let mut block_header = BlockHeader::new(1, None);
         let txs = vec![
             Transaction::test_dummy(),
             Transaction::test_dummy(),

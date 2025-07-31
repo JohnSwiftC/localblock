@@ -147,11 +147,11 @@ impl BlockHeader {
         })
     }
 
-    pub async fn new(version: u8, prev_block_header: Option<&BlockHeader>) -> Self {
+    pub fn new(version: u8, prev_block_header: Option<HashedBlock>) -> Self {
         match prev_block_header {
             Some(b) => Self {
                 version,
-                previous_hash: b.hash().await,
+                previous_hash: b,
                 merkle_root: [0; 32], // unitialized merkle root
                 nonce: 0,
             },
