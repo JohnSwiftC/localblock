@@ -18,7 +18,7 @@
         - from_bytes() X
         - rewrote hashing X
     - Transaction UNFINISHED
-        - bytes() UNFINISHED
+        - bytes() X
         - from_bytes() UNFINISHED
         - rewrote hashing UNFINISHED
 

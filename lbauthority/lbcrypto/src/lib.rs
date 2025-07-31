@@ -235,6 +235,12 @@ impl Transaction {
 
         for input in &self.inputs {
             bytes.extend_from_slice(&input.txid);
+            bytes.extend_from_slice(&input.index.to_le_bytes());
+        }
+
+        for output in &self.outputs {
+            bytes.extend_from_slice(&output.recip);
+            bytes.extend_from_slice(&output.amount.to_le_bytes());
         }
 
         bytes
