@@ -171,6 +171,8 @@ pub fn get_wallet_names(conn: &Connection) -> Result<Vec<String>, LoadingError> 
     Ok(names)
 }
 
+// What the hell?
+
 pub fn init_db_conn(path: &str) -> Result<Connection, LoadingError> {
     let conn = sqlite::open(path).map_err(|e| LoadingError::GenericSQLError {
         message: format!("{}", e),
