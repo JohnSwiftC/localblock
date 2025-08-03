@@ -432,6 +432,16 @@ mod tests {
     use p256::{ecdsa::Signature, elliptic_curve::rand_core::OsRng, pkcs8::PrivateKeyInfo};
 
     #[test]
+    fn tx_serialization() {
+        let tx = Transaction::test_dummy();
+        let bytes = tx.serialize();
+
+        let bring_it_back: Transaction = Transaction::from_bytes(&bytes);
+
+        assert_eq!(tx, bring_it_back);
+    }
+
+    #[test]
     fn merkle() {
         let private = p256::ecdsa::SigningKey::random(&mut OsRng);
         let public = private.verifying_key().to_owned();
