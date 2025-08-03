@@ -256,10 +256,68 @@ impl Transaction {
         // but then how to do it? might make bytes here called serialize to indicate that im adding extra data to allow for it
         // to be parsed back
 
-        // placeholder
-        Err(
-            SerialError::IncorrectSize { expected: 1, provided: 1 }
-        )
+        // size checks?
+
+        let mut left = 0;
+
+        let txid: Txid = bytes[left..left + 32].try_into().map_err(|_| {
+            SerialError::ImproperComponent { name: "txid".to_owned() }
+        })?;
+        left += 32;
+
+        let signature: Signature = Signature::from_bytes(bytes[left..left + 64].into()).map_err(|_| {
+            SerialError::ImproperComponent { name: "signature".to_owned() }
+        })?;
+        left += 64;
+
+        let verifying_key: VerifyingKey = VerifyingKey::from_sec1_bytes(bytes[left..left + 33].into()).map_err(|_| {
+            SerialError::ImproperComponent { name: "verifying_key".to_owned() }
+        })?;
+        left += 33;
+
+        let input_count: u8 = u8::from_le_bytes([bytes[left]]);
+        left += 1;
+
+        let mut inputs: Vec<TxInput> = Vec::with_capacity(input_count as usize);
+
+        for _ in 0..input_count {
+
+            let txid: Txid = bytes[left..left + 32].try_into().map_err(|_| {
+                SerialError::ImproperComponent { name: "txid in input".to_owned() }
+            })?;
+            left += 32;
+            let index: u8 = u8::from_le_bytes([bytes[left]]);
+            left += 1;
+            inputs.push(TxInput { txid, index });
+
+        }
+
+        let output_count: u8 = u8::from_le_bytes([bytes[left]]);
+        left += 1;
+
+        let mut outputs: Vec<TxOutput> = Vec::with_capacity(output_count as usize);
+
+        for _ in 0..output_count {
+
+            let hashed_public: HashedPublic = bytes[left..left + 32].try_into().map_err(|e| {
+                SerialError::ImproperComponent { name: "hashed_public in output".to_owned() }
+            })?;
+            left += 32;
+            let amount: u32 = u32::from_le_bytes(bytes[left..left + 4].try_into().map_err(|_| {
+                SerialError::ImproperComponent { name: "amount in output".to_owned() }
+            })?);
+
+            outputs.push(TxOutput { recip: hashed_public, amount });
+        }
+
+        Ok(Transaction {
+            txid,
+            signature,
+            verifying_key,
+            inputs,
+            outputs,
+        })
+
     }
 
     pub async fn verify_signature(&self) -> bool {
@@ -349,6 +407,7 @@ impl Transaction {
 #[derive(Debug)]
 pub enum SerialError {
     IncorrectSize { expected: usize, provided: usize },
+    ImproperComponent { name: String },
 }
 
 impl std::fmt::Display for SerialError {
@@ -356,6 +415,10 @@ impl std::fmt::Display for SerialError {
         match &self {
             SerialError::IncorrectSize { expected, provided } => {
                 write!(f, "Expected {} bytes, got {}", expected, provided)
+            }
+
+            SerialError::ImproperComponent { name } => {
+                write!(f, "Component {} is improperly formatted", name)
             }
         }
     }
