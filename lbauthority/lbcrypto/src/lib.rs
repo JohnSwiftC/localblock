@@ -12,10 +12,12 @@ type HashedPublic = [u8; 32];
 /// represents an input in a transaction
 /// references a previous transaction, and the index of the specific
 /// output that is trying to be spent
+#[derive(Debug, PartialEq, Eq)]
 struct TxInput {
     txid: Txid,
     index: u8,
 }
+#[derive(Debug, PartialEq, Eq)]
 struct TxOutput {
     recip: HashedPublic,
     amount: u32,
@@ -214,6 +216,7 @@ impl BlockHeader {
 }
 
 use p256::ecdsa::{Signature, VerifyingKey};
+#[derive(Debug, PartialEq, Eq)]
 pub struct Transaction {
     txid: Txid,
     signature: Signature, // is signature on the inputs and outputs from the sender
