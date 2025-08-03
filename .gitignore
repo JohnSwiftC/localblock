@@ -2,3 +2,4 @@ lbauthority/target/
 lbclient/target/
 lbclient/*.db
 lbauthority/*.db
+lbauthority/lbcrypto/target/

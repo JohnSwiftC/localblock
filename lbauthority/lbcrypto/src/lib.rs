@@ -436,7 +436,7 @@ mod tests {
         let tx = Transaction::test_dummy();
         let bytes = tx.serialize();
 
-        let bring_it_back: Transaction = Transaction::from_bytes(&bytes);
+        let bring_it_back: Transaction = Transaction::from_bytes(&bytes).unwrap();
 
         assert_eq!(tx, bring_it_back);
     }
