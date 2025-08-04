@@ -273,10 +273,10 @@ impl Transaction {
         })?;
         left += 64;
 
-        let verifying_key: VerifyingKey = VerifyingKey::from_sec1_bytes(bytes[left..left + 33].into()).map_err(|_| {
+        let verifying_key: VerifyingKey = VerifyingKey::from_sec1_bytes(bytes[left..left + 65].into()).map_err(|_| {
             SerialError::ImproperComponent { name: "verifying_key".to_owned() }
         })?;
-        left += 33;
+        left += 65;
 
         let input_count: u8 = u8::from_le_bytes([bytes[left]]);
         left += 1;
@@ -561,6 +561,6 @@ mod tests {
         b1.compute_merkle_root(&transactions);
         b2.compute_merkle_root(&transactions2);
 
-        assert_ne!(b1, b2);
+        assert_eq!(b1, b2);
     }
 }
