@@ -467,6 +467,24 @@ mod tests {
     use p256::{ecdsa::Signature, elliptic_curve::rand_core::OsRng, pkcs8::PrivateKeyInfo};
 
     #[test]
+    fn block_header_serialization() {
+        let header = BlockHeader::new(1, None);
+        let bytes = header.bytes();
+        let bring_it_back = BlockHeader::from_bytes(&bytes).unwrap();
+
+        assert_eq!(header, bring_it_back);
+    }
+
+    #[test]
+    fn block_hash_serialization() {
+        let hash: HashedBlock = HashedBlock { bytes: [32; 32] };
+        let bytes = hash.bytes();
+        let bring_it_back: HashedBlock = HashedBlock::from_bytes(&bytes).unwrap();
+
+        assert_eq!(hash, bring_it_back);
+    }
+
+    #[test]
     fn tx_serialization() {
         let tx = Transaction::test_dummy();
         let bytes = tx.serialize();
