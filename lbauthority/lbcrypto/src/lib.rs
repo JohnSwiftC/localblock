@@ -421,7 +421,20 @@ impl Transaction {
                     index: 2,
                 },
             ],
-            outputs: Vec::new(),
+            outputs: vec![
+                TxOutput {
+                    recip: [12; 32],
+                    amount: 22,
+                },
+                TxOutput {
+                    recip: [13; 32],
+                    amount: 3931394929,
+                },
+                TxOutput {
+                    recip: [12; 32],
+                    amount: 3,
+                }
+            ]
         }
     }
 }
