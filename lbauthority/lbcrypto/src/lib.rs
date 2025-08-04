@@ -22,7 +22,7 @@ struct TxOutput {
     recip: HashedPublic,
     amount: u32,
 }
-/// The representation of a block within a localblocl
+/// The representation of a block within a localblock
 /// network. Similar to bitcoin's.
 pub struct Block {
     pub header: BlockHeader,
@@ -260,9 +260,13 @@ impl Transaction {
         // to be parsed back
 
         // size checks?
+        let header_size_error = SerialError::ImproperComponent { name: "transaction header".to_owned() };
+        let inputs_size_error = SerialError::ImproperComponent { name: "inputs size".to_owned() };
+        let outpus_size_error = SerialError::ImproperComponent { name: "outputs size".to_owned() };
 
         let mut left = 0;
 
+        if bytes.len() < 162 { return Err(header_size_error) } // Check size for the constant size header of the transaction
         let txid: Txid = bytes[left..left + 32].try_into().map_err(|_| {
             SerialError::ImproperComponent { name: "txid".to_owned() }
         })?;
@@ -283,6 +287,11 @@ impl Transaction {
 
         let mut inputs: Vec<TxInput> = Vec::with_capacity(input_count as usize);
 
+        // uhh txid is 33 bytes so another size check for the reported input amount
+        // also account for the needed output count byte following the inputs
+        let inputs_size = 33 * input_count as usize + 1;
+        if bytes.len() < left + inputs_size { return Err(inputs_size_error) }
+
         for _ in 0..input_count {
 
             let txid: Txid = bytes[left..left + 32].try_into().map_err(|_| {
@@ -300,6 +309,10 @@ impl Transaction {
 
         let mut outputs: Vec<TxOutput> = Vec::with_capacity(output_count as usize);
 
+        // same deal
+        let outputs_size = 36 * output_count as usize;
+        if bytes.len() < left + outputs_size { return Err(outpus_size_error) }
+
         for _ in 0..output_count {
 
             let hashed_public: HashedPublic = bytes[left..left + 32].try_into().map_err(|e| {
@@ -309,6 +322,7 @@ impl Transaction {
             let amount: u32 = u32::from_le_bytes(bytes[left..left + 4].try_into().map_err(|_| {
                 SerialError::ImproperComponent { name: "amount in output".to_owned() }
             })?);
+            left += 4;
 
             outputs.push(TxOutput { recip: hashed_public, amount });
         }
