@@ -362,6 +362,10 @@ impl Transaction {
         &hash[..] == &self.txid[..]
     }
 
+    /// Hashes the transaction
+    /// Notably, this manually serializes the struct (unlike other types)
+    /// because Transaction only has a serialize method, which adds extra data
+    /// for the sole purpose of deserialization later
     pub async fn hash(&self) -> [u8; 32] {
         let mut hasher = Sha256::new();
         hasher.update(&self.txid);
@@ -385,6 +389,7 @@ impl Transaction {
     pub fn test_dummy() -> Self {
         let private = p256::ecdsa::SigningKey::random(&mut OsRng);
         let public = private.verifying_key().to_owned();
+        // in reality, this would actually be the inputs and outputs signed as bytes in sequence
         let message = b"Some bullshit";
         let signature = private.sign(message);
 
