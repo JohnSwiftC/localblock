@@ -41,6 +41,10 @@ impl Block {
 
         for tx in &self.transactions {
             bytes.extend_from_slice(&tx.serialize());
+            bytes.push(0);
+            // Transactions are seperated by 0 bytes. This should never normally occur in the bytes that make up a transaction.
+            // As a side note, transactions with 0 inputs and/or 0 outputs should never be accepted, meaning that case is also fine
+            // (tx serialization adds the length of the inputs and outputs vec)
         }
 
         bytes
