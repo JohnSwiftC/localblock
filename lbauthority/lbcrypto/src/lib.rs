@@ -63,11 +63,11 @@ impl Block {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct HashedBlock {
+pub struct HashedBlockHeader {
     bytes: [u8; 32],
 }
 
-impl HashedBlock {
+impl HashedBlockHeader {
     pub async fn has_zero_bits(&self, n: u8) -> bool {
         let mut count: u8 = 0;
 
@@ -82,18 +82,18 @@ impl HashedBlock {
         count >= n
     }
 
-    pub fn from_bytes(bytes: &[u8]) -> Result<HashedBlock, SerialError> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<HashedBlockHeader, SerialError> {
         let fixed_b: [u8; 32] = bytes.try_into().map_err(|_| SerialError::IncorrectSize {
-            expected: HashedBlock::raw_size(),
+            expected: HashedBlockHeader::raw_size(),
             provided: bytes.len(),
         })?;
 
-        Ok(HashedBlock { bytes: fixed_b })
+        Ok(HashedBlockHeader { bytes: fixed_b })
     }
 
     /// Panics if not given the appropritate amount of bytes
-    pub fn from_bytes_unchecked(bytes: &[u8]) -> HashedBlock {
-        HashedBlock {
+    pub fn from_bytes_unchecked(bytes: &[u8]) -> HashedBlockHeader {
+        HashedBlockHeader {
             bytes: bytes.try_into().unwrap(),
         }
     }
@@ -110,18 +110,18 @@ impl HashedBlock {
 #[derive(Debug, PartialEq, Eq)]
 pub struct BlockHeader {
     version: u8,
-    previous_hash: HashedBlock,
+    previous_hash: HashedBlockHeader,
     merkle_root: [u8; 32],
     nonce: u64,
 }
 
 // WARNING: BEFORE CHANGING ANYTHING HERE, THINK ABOUT WHAT THIS MIGHT DO TO THE SIZE. I NEED TO WRITE TESTS TO ENFORCE THIS
 impl BlockHeader {
-    pub async fn hash(&self) -> HashedBlock {
+    pub async fn hash(&self) -> HashedBlockHeader {
         let mut hasher = Sha256::new();
         hasher.update(self.bytes());
 
-        let inter: HashedBlock = HashedBlock {
+        let inter: HashedBlockHeader = HashedBlockHeader {
             bytes: hasher.finalize().into(),
         };
 
@@ -130,7 +130,7 @@ impl BlockHeader {
         let mut hasher = Sha256::new();
         hasher.update(&inter.bytes[..]);
 
-        HashedBlock {
+        HashedBlockHeader {
             bytes: hasher.finalize().into(),
         }
     }
@@ -157,7 +157,7 @@ impl BlockHeader {
         // Unwrapping because we know from the previous check that we will be able to create every type. This does not check to see if that
         // type really makes sense, but thats a problem for a later day
         let version: u8 = u8::from_le_bytes([bytes[0]]);
-        let previous_hash: HashedBlock = HashedBlock::from_bytes_unchecked(&bytes[1..33]);
+        let previous_hash: HashedBlockHeader = HashedBlockHeader::from_bytes_unchecked(&bytes[1..33]);
         let merkle_root: [u8; 32] = bytes[33..65].try_into().unwrap();
         let nonce: u64 = u64::from_le_bytes(bytes[65..73].try_into().unwrap());
 
@@ -169,7 +169,7 @@ impl BlockHeader {
         })
     }
 
-    pub fn new(version: u8, prev_block_header: Option<HashedBlock>) -> Self {
+    pub fn new(version: u8, prev_block_header: Option<HashedBlockHeader>) -> Self {
         match prev_block_header {
             Some(b) => Self {
                 version,
@@ -180,7 +180,7 @@ impl BlockHeader {
 
             None => Self {
                 version,
-                previous_hash: HashedBlock { bytes: [0; 32] }, // None. Pretty much just useful for testing and the first block of a new network.
+                previous_hash: HashedBlockHeader { bytes: [0; 32] }, // None. Pretty much just useful for testing and the first block of a new network.
                 merkle_root: [0; 32],
                 nonce: 0,
             },
@@ -497,9 +497,9 @@ mod tests {
 
     #[test]
     fn block_hash_serialization() {
-        let hash: HashedBlock = HashedBlock { bytes: [32; 32] };
+        let hash: HashedBlockHeader = HashedBlockHeader { bytes: [32; 32] };
         let bytes = hash.bytes();
-        let bring_it_back: HashedBlock = HashedBlock::from_bytes(&bytes).unwrap();
+        let bring_it_back: HashedBlockHeader = HashedBlockHeader::from_bytes(&bytes).unwrap();
 
         assert_eq!(hash, bring_it_back);
     }
