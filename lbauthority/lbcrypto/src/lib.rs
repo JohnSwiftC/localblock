@@ -29,6 +29,22 @@ pub struct Block {
     pub transactions: Vec<Transaction>,
 }
 impl Block {
+
+    /// Just like a Transaction, serializes a block with some extra data to make reconstructing it easier
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut bytes = Vec::new(); // optimize later with a with capacity call, need some functions in the struct fields to get their sizes
+        bytes.extend_from_slice(&self.header.bytes());
+
+        // number of transactions
+
+        bytes.extend_from_slice(&(self.transactions.len() as u8).to_le_bytes());
+
+        for tx in &self.transactions {
+            bytes.extend_from_slice(&tx.serialize());
+        }
+
+        bytes
+    }
     /// Requires a mut reference becuase it will increment the nonce until a valid hash is found.
     pub async fn search_for_nonce(&mut self, n: u8) {
         loop {
