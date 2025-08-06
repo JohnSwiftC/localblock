@@ -49,7 +49,59 @@ impl Block {
 
         bytes
     }
-    /// Requires a mut reference becuase it will increment the nonce until a valid hash is found.
+
+    pub fn from_bytes(bytes: &[u8]) -> Result<Block, SerialError> {
+        if bytes.len() < BlockHeader::raw_size() {
+            return Err(SerialError::ImproperComponent { name: "blockheader".to_owned() });
+        }
+
+        let block_header = BlockHeader::from_bytes(&bytes[0..BlockHeader::raw_size()])?;
+
+        let mut left = BlockHeader::raw_size();
+        if bytes.len() <= left { return Err(SerialError::ImproperComponent { name: "tx amount".to_owned() })}
+        
+        let tx_count = u8::from_le_bytes([bytes[left]]);
+        left += 1;
+
+        let mut zero_check = 0;
+        for &b in &bytes[left..] {
+            if b == 0 {
+                zero_check += 1;
+            }
+        }
+
+        if zero_check != tx_count {
+            return Err( SerialError::ImproperComponent { name: "transaction delimiters".to_owned() });
+        }
+
+        let mut txs: Vec<Transaction> = Vec::with_capacity(tx_count as usize);
+
+        for n in 0..tx_count {
+            if bytes.len() <= left {
+                return Err( SerialError::ImproperComponent { name: format!("no transaction when expected: {}", n) });
+            }
+
+            let tx = Transaction::from_bytes(&bytes[left..])?;
+            let mut offset = 0;
+            for &b in &bytes[left..] {
+                if b == 0 {
+                    offset += 1;
+                } else {
+                    offset += 1;
+                    break;
+                }
+            }
+
+            txs.push(tx);
+
+            left += offset;
+
+        }
+
+        Ok(Block { header: block_header, transactions: txs })
+
+    }
+    /// Requires a mut reference because it will increment the nonce until a valid hash is found.
     pub async fn search_for_nonce(&mut self, n: u8) {
         loop {
             let hash = self.header.hash().await;
@@ -246,7 +298,7 @@ pub struct Transaction {
 }
 
 use p256::ecdsa::signature::{Signer, Verifier};
-use p256::elliptic_curve::rand_core::OsRng;
+use p256::elliptic_curve::rand_core::{block, OsRng};
 impl Transaction {
     pub fn serialize(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
