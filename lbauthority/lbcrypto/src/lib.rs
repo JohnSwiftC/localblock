@@ -24,6 +24,7 @@ struct TxOutput {
 }
 /// The representation of a block within a localblock
 /// network. Similar to bitcoin's.
+#[derive(Debug, PartialEq, Eq)]
 pub struct Block {
     pub header: BlockHeader,
     pub transactions: Vec<Transaction>,
@@ -537,6 +538,19 @@ mod tests {
     use super::*;
     use p256::ecdsa::signature::Signer;
     use p256::{ecdsa::Signature, elliptic_curve::rand_core::OsRng, pkcs8::PrivateKeyInfo};
+
+    #[test]
+    fn block_serialization() {
+        let txs = vec![Transaction::test_dummy(), Transaction::test_dummy(), Transaction::test_dummy()];
+        let hash = HashedBlockHeader { bytes: [12; 32] };
+        let header = BlockHeader::new(1, Some(hash));
+
+        let block = Block { header, transactions: txs };
+        let bytes = block.serialize();
+        let bring_it_back = Block::from_bytes(&bytes).unwrap();
+
+        assert_eq!(block, bring_it_back);
+    }
 
     #[test]
     fn block_header_serialization() {
