@@ -327,7 +327,7 @@ impl Transaction {
         bytes
     }
 
-    pub fn from_bytes(bytes: &[u8]) -> Result<Transaction, SerialError> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<(Transaction, usize), SerialError> {
         // uh not exactly sure how i want to do this yet, might have to do some math for it
         // but then how to do it? might make bytes here called serialize to indicate that im adding extra data to allow for it
         // to be parsed back
@@ -400,13 +400,13 @@ impl Transaction {
             outputs.push(TxOutput { recip: hashed_public, amount });
         }
 
-        Ok(Transaction {
+        Ok((Transaction {
             txid,
             signature,
             verifying_key,
             inputs,
             outputs,
-        })
+        }, left + 1))
 
     }
 
@@ -575,7 +575,7 @@ mod tests {
         let tx = Transaction::test_dummy();
         let bytes = tx.serialize();
 
-        let bring_it_back: Transaction = Transaction::from_bytes(&bytes).unwrap();
+        let (bring_it_back, _) = Transaction::from_bytes(&bytes).unwrap();
 
         assert_eq!(tx, bring_it_back);
     }
