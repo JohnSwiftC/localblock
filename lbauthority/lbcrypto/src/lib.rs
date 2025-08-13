@@ -57,49 +57,32 @@ impl Block {
         }
 
         let block_header = BlockHeader::from_bytes(&bytes[0..BlockHeader::raw_size()])?;
-
         let mut left = BlockHeader::raw_size();
-        if bytes.len() <= left { return Err(SerialError::ImproperComponent { name: "tx amount".to_owned() })}
+
+        if bytes.len() < left + 1 {
+            return Err(SerialError::ImproperComponent { name: "tx count".to_owned() });
+        }
         
-        let tx_count = u8::from_le_bytes([bytes[left]]);
+        let tx_count: u8 = u8::from_le_bytes([bytes[left]]);
         left += 1;
-
-        let mut zero_check = 0;
-        for &b in &bytes[left..] {
-            if b == 0 {
-                zero_check += 1;
-            }
-        }
-
-        if zero_check != tx_count {
-            return Err( SerialError::ImproperComponent { name: "transaction delimiters".to_owned() });
-        }
-
         let mut txs: Vec<Transaction> = Vec::with_capacity(tx_count as usize);
-
-        for n in 0..tx_count {
+        for _ in 0..tx_count {
             if bytes.len() <= left {
-                return Err( SerialError::ImproperComponent { name: format!("no transaction when expected: {}", n) });
+                return Err(SerialError::ImproperComponent { name: "tx size".to_owned() });
             }
 
-            let tx = Transaction::from_bytes(&bytes[left..])?;
-            let mut offset = 0;
-            for &b in &bytes[left..] {
-                if b == 0 {
-                    offset += 1;
-                } else {
-                    offset += 1;
-                    break;
-                }
-            }
-
+            let (tx, bread) = Transaction::from_bytes(&bytes[left..])?;
             txs.push(tx);
 
-            left += offset;
-
+            left += bread;
         }
 
-        Ok(Block { header: block_header, transactions: txs })
+        Ok(
+            Block {
+                header: block_header,
+                transactions: txs,
+            }
+        )
 
     }
     /// Requires a mut reference because it will increment the nonce until a valid hash is found.
